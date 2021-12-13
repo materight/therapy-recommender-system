@@ -1,1 +1,1 @@
-# therapy-recommender-system
+# Therapy Recommender System
