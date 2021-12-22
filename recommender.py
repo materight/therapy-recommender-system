@@ -17,6 +17,10 @@ def load_data(path):
     patients = pd.DataFrame.from_dict(patients).set_index('id')
     p_conditions = pd.DataFrame.from_dict(p_conditions).set_index(['patient', 'id'])
     p_trials = pd.DataFrame.from_dict(p_trials).set_index(['patient', 'id'])
+    # Post-processing
+    p_conditions['diagnosed'], p_conditions['cured'] = pd.to_datetime(p_conditions['diagnosed']), pd.to_datetime(p_conditions['cured'])
+    p_trials['start'], p_trials['end'] = pd.to_datetime(p_trials['start']), pd.to_datetime(p_trials['end'])
+    p_trials['successfull'] = p_trials['successfull'].astype(int)
     return conditions, therapies, patients, p_conditions, p_trials
 
 
@@ -37,3 +41,6 @@ if __name__ == '__main__':
 
     # Load dataset
     conditions, therapies, patients, p_conditions, p_trials = load_data(args.dataset_path)
+
+    # Compute feature vector for trials
+    df = p_trials.merge(p_conditions, left_on=['patient', 'condition'], right_on=['patient', 'kind'])
