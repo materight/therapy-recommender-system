@@ -80,7 +80,7 @@ def gen_patients(faker, conditions, therapies, n_patients, n_test_patients, cond
 
 if __name__ == '__main__':
     # Script arguments
-    parser = argparse.ArgumentParser(description='Generate a synthetic dataset of patients with conditions.')
+    parser = argparse.ArgumentParser(description='Generate a synthetic dataset of patients with conditions.', formatter_class=lambda prog: argparse.HelpFormatter(prog, max_help_position=42))
     parser.add_argument('-o', '--out', dest='out_path', type=str, default='./data/generated/dataset.json', help='path of the output file (default: %(default)s).', metavar='PATH')
     parser.add_argument('--n_patients', type=int, default=100, help='number of patients to be generated (default: %(default)s).', metavar='N')
     parser.add_argument('--n_test', type=int, default=3, help='number of test patients to be generated, with an uncured condition (default: %(default)s).', metavar='N')
@@ -99,7 +99,7 @@ if __name__ == '__main__':
 
     # Generate main tables
     conditions = gen_conditions(conditions_names)
-    therapies = gen_conditions(therapies_names)
+    therapies = gen_therapies(therapies_names)
     patients, test_cases = gen_patients(faker, conditions, therapies, n_patients=args.n_patients, n_test_patients=args.n_test, conditions_per_patient_range=args.conditions_per_patient, trials_per_condition_range=args.trials_per_conditions, prob_cured_condition=args.prob_cured)
     
     # Save to json file
@@ -109,5 +109,6 @@ if __name__ == '__main__':
         json.dump(data, f)
     with open(f'{os.path.dirname(args.out_path)}/test.csv', 'w') as f:
         f.write('patient_id,condition_id\n')
-        for patient_id, condition_id in test_cases: f.write(f'{patient_id},{condition_id}\n')
+        for patient_id, condition_id in test_cases: 
+            f.write(f'{patient_id},{condition_id}\n')
     print(f'Generated dataset saved into {args.out_path}.')
