@@ -47,19 +47,24 @@ def gen_therapies(therapies):
     return ls
 
 
-def gen_patients(faker, conditions, therapies, how_many_patients, conditions_per_patient_range, trials_per_condition_range, prob_cured_condition, min_date=datetime.date(2019,1,1), max_date=datetime.date(2021,12,1)):
-    ls = []
+def gen_patients(faker, conditions, therapies, n_patients, n_test_patients, conditions_per_patient_range, trials_per_condition_range, prob_cured_condition, min_date=datetime.date(2019,1,1), max_date=datetime.date(2021,12,1)):
+    patients, test_cases = [], []
     patient_condition_id, trials_id = 0, 0
-    for patient_id in tqdm(range(how_many_patients), desc='Generating patients'):
+    for patient_id in tqdm(range(n_patients + n_test_patients), desc='Generating patients'):
         name = faker.name()
         patient_conditions, patient_trials = [], []
+        is_test_patient = patient_id >= n_patients
         # Generate conditions of patient
-        for _ in range(np.random.randint(*conditions_per_patient_range)): # How many conditions per patient
-            is_cured = faker.boolean(chance_of_getting_true=prob_cured_condition)
+        n_conditions = np.random.randint(*conditions_per_patient_range) + (1 if is_test_patient else 0)
+        for i in range(n_conditions): # How many conditions per patient
+            is_test_condition = is_test_patient and i == n_conditions-1
+            is_cured = faker.boolean(chance_of_getting_true=prob_cured_condition) if not is_test_condition else False
             diagnosed = faker.date_between(start_date=min_date, end_date=max_date)
             cured = faker.date_between(start_date=diagnosed, end_date=max_date) if is_cured else None
             condition = np.random.choice(conditions)
             patient_conditions.append({'id': f'pc{patient_condition_id}', 'diagnosed': diagnosed.strftime('%Y%m%d'), 'cured': cured.strftime('%Y%m%d') if is_cured else None, 'kind': condition['id']})
+            if is_test_condition:
+                test_cases.append((patient_id, f'pc{patient_condition_id}'))
             patient_condition_id += 1
             # Generate trials of condition
             for _ in range(np.random.randint(*trials_per_condition_range)): # How many trials per condition 
@@ -69,18 +74,20 @@ def gen_patients(faker, conditions, therapies, how_many_patients, conditions_per
                 successfull = np.random.randint(0, 100)
                 patient_trials.append({'id': f'tr{trials_id}', 'start': start.strftime('%Y%m%d'), 'end': end.strftime('%Y%m%d'), 'condition': condition['id'], 'therapy': therapy['id'], 'successfull': f'{successfull}'})
                 trials_id += 1
-        ls.append({'id': patient_id, 'name': name, 'conditions': patient_conditions, 'trials': patient_trials})
-    return ls
+        patients.append({'id': patient_id, 'name': name, 'conditions': patient_conditions, 'trials': patient_trials})
+    return patients, test_cases
 
 
 if __name__ == '__main__':
     # Script arguments
     parser = argparse.ArgumentParser(description='Generate a synthetic dataset of patients with conditions.')
-    parser.add_argument('-o', '--out', dest='out_path', type=str, default='./datasets/generated/dataset.json', help='path of the output file (default: %(default)s).', metavar='PATH')
+    parser.add_argument('-o', '--out', dest='out_path', type=str, default='./data/generated/dataset.json', help='path of the output file (default: %(default)s).', metavar='PATH')
     parser.add_argument('--n_patients', type=int, default=100, help='number of patients to be generated (default: %(default)s).', metavar='N')
+    parser.add_argument('--n_test', type=int, default=3, help='number of test patients to be generated, with an uncured condition (default: %(default)s).', metavar='N')
     parser.add_argument('--conditions_per_patient', type=tuple, nargs=2, default=(3, 10), help='min and max number of conditions to be generated for each patient (default: %(default)s).', metavar=('MIN', 'MAX'))
     parser.add_argument('--trials_per_conditions', type=tuple, nargs=2, default=(0, 5), help='min and max number of trials to be generated for each condition of a patient (default: %(default)s).', metavar=('MIN', 'MAX'))
     parser.add_argument('--prob_cured', type=int, default=90, help='probability for a condition to be cured (default: %(default)s). Must be a value between 0 and 100.', metavar='P')
+
     args = parser.parse_args()
 
     # Initialize fake data generation
@@ -93,11 +100,14 @@ if __name__ == '__main__':
     # Generate main tables
     conditions = gen_conditions(conditions_names)
     therapies = gen_conditions(therapies_names)
-    patients = gen_patients(faker, conditions, therapies, how_many_patients=args.n_patients, conditions_per_patient_range=args.conditions_per_patient, trials_per_condition_range=args.trials_per_conditions, prob_cured_condition=args.prob_cured)
+    patients, test_cases = gen_patients(faker, conditions, therapies, n_patients=args.n_patients, n_test_patients=args.n_test, conditions_per_patient_range=args.conditions_per_patient, trials_per_condition_range=args.trials_per_conditions, prob_cured_condition=args.prob_cured)
     
     # Save to json file
     data = {'Conditions': conditions, 'Therapies': therapies, 'Patients': patients}
     os.makedirs(os.path.dirname(args.out_path), exist_ok=True)
-    with open('datasets/generated/dataset.json', 'w') as f:
+    with open(args.out_path, 'w') as f:
         json.dump(data, f)
+    with open(f'{os.path.dirname(args.out_path)}/test.csv', 'w') as f:
+        f.write('patient_id,condition_id\n')
+        for patient_id, condition_id in test_cases: f.write(f'{patient_id},{condition_id}\n')
     print(f'Generated dataset saved into {args.out_path}.')
