@@ -87,13 +87,13 @@ if __name__ == '__main__':
     parser.add_argument('--conditions_per_patient', type=tuple, nargs=2, default=(3, 10), help='min and max number of conditions to be generated for each patient (default: %(default)s).', metavar=('MIN', 'MAX'))
     parser.add_argument('--trials_per_conditions', type=tuple, nargs=2, default=(0, 5), help='min and max number of trials to be generated for each condition of a patient (default: %(default)s).', metavar=('MIN', 'MAX'))
     parser.add_argument('--prob_cured', type=int, default=90, help='probability for a condition to be cured (default: %(default)s). Must be a value between 0 and 100.', metavar='P')
-
+    parser.add_argument('--seed', type=int, default=0, help='random seed used in the generation (default: %(default)s).', metavar='S')
     args = parser.parse_args()
 
     # Initialize fake data generation
     faker = Faker()
-    faker.seed_instance(0)
-    np.random.seed(0)
+    faker.seed_instance(args.seed)
+    np.random.seed(args.seed)
     conditions_names = fetch_conditions()
     therapies_names = fetch_therapies()
 
