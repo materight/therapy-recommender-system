@@ -7,7 +7,8 @@
 
 ## Recommender
 Ideas:
-- Use matrix completion over the trials (how to take into account the order of the trials?)
+- Use matrix completion over the condition-trials pair (or only trials)
+- Define a distance function and use k-nearest neighbor, then select the therapy with highest success between the k neighbor. (NB: the neighbors should have the same unsolved condition for which we are computing recommendations)
 - Other info to extract and exploit: duration of trial, duration of condition, distance between diagnosed and start of trial and cured and end of trial 
 
 ## Data generation
