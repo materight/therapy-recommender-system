@@ -3,6 +3,7 @@ import json
 import numpy as np
 import pandas as pd
 
+
 def load_data(path):
     with open(args.dataset_path, 'r') as f:
         data = json.load(f)
@@ -49,4 +50,12 @@ if __name__ == '__main__':
     # Load dataset
     conditions, therapies, patients, p_conditions, p_trials = load_data(args.dataset_path)
 
+    # Merge everything
+    merged = (p_trials.reset_index()
+        .merge(p_conditions, how='left', left_on=['patient', 'condition'], right_on=['patient', 'kind']).drop(['kind'], axis=1) # TODO solve issue: if a condition for a patient appears multiple times, the trial gets duplicated
+        .merge(conditions.add_prefix('condition_'), how='left', left_on=['condition'], right_on=['id']).drop(['condition_name'], axis=1)
+        .merge(therapies.add_prefix('therapy_'), how='left', left_on=['therapy'], right_on=['id']).drop(['therapy_name'], axis=1)
+        .merge(patients.add_prefix('patient_'), how='left', left_on=['patient'], right_on=['id']).drop(['patient_name'], axis=1)
+    ).set_index(['patient', 'id'])
 
+    
