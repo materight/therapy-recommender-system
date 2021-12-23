@@ -106,7 +106,7 @@ if __name__ == '__main__':
     data = {'Conditions': conditions, 'Therapies': therapies, 'Patients': patients}
     os.makedirs(os.path.dirname(args.out_path), exist_ok=True)
     with open(args.out_path, 'w') as f:
-        json.dump(data, f)
+        json.dump(data, f, separators=(',', ':'))
     with open(f'{os.path.dirname(args.out_path)}/test.csv', 'w') as f:
         f.write('patient_id,condition_id\n')
         for patient_id, condition_id in test_cases: 

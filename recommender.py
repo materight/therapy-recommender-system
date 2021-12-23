@@ -24,6 +24,13 @@ def load_data(path):
     return conditions, therapies, patients, p_conditions, p_trials
 
 
+def svd(p_trials):
+    pt_matrix = p_trials.pivot_table(index='patient', columns=['condition', 'therapy'], values='successfull', fill_value=0) # Compute matrix of patient-therapies for SVD
+    u, s, vh = np.linalg.svd(pt_matrix.values, full_matrices=False)
+    reconstructed = (u * s) @ vh
+    return u, s, vh
+
+
 if __name__ == '__main__':
     # Script arguments
     parser = argparse.ArgumentParser(description='Therapy recommender system.', formatter_class=lambda prog: argparse.HelpFormatter(prog, max_help_position=42))
@@ -42,5 +49,4 @@ if __name__ == '__main__':
     # Load dataset
     conditions, therapies, patients, p_conditions, p_trials = load_data(args.dataset_path)
 
-    # Compute feature vector for trials
-    df = p_trials.merge(p_conditions, left_on=['patient', 'condition'], right_on=['patient', 'kind'])
+
