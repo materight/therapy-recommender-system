@@ -58,4 +58,9 @@ if __name__ == '__main__':
         .merge(patients.add_prefix('patient_'), how='left', left_on=['patient'], right_on=['id']).drop(['patient_name'], axis=1)
     ).set_index(['patient', 'id'])
 
-    
+    # Mine frequent itemsets
+    from mlxtend.frequent_patterns import apriori
+    from scipy.sparse import csr_matrix
+    trials_itemset = merged.pivot_table(index=['patient', 'condition'], columns='therapy', values='successfull')
+    apriori_input = pd.DataFrame.sparse.from_spmatrix(csr_matrix(trials_itemset.fillna(0).astype(bool).values), index=trials_itemset.index, columns=trials_itemset.columns)
+    frequent_therapies = apriori(apriori_input, min_support=0.1, use_colnames=True)

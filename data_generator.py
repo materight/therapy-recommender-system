@@ -81,8 +81,8 @@ def gen_patients(faker, conditions, therapies, n_patients, n_test_patients, cond
 if __name__ == '__main__':
     # Script arguments
     parser = argparse.ArgumentParser(description='Generate a synthetic dataset of patients with conditions.', formatter_class=lambda prog: argparse.HelpFormatter(prog, max_help_position=42))
-    parser.add_argument('-o', '--out', dest='out_path', type=str, default='./data/generated/dataset.json', help='path of the output file (default: %(default)s).', metavar='PATH')
-    parser.add_argument('--n_patients', type=int, default=100, help='number of patients to be generated (default: %(default)s).', metavar='N')
+    parser.add_argument('-o', '--out', dest='out_dir', type=str, default='./data/generated', help='path of the output file (default: %(default)s).', metavar='PATH')
+    parser.add_argument('--n_patients', type=int, default=1000, help='number of patients to be generated (default: %(default)s).', metavar='N')
     parser.add_argument('--n_test', type=int, default=3, help='number of test patients to be generated, with an uncured condition (default: %(default)s).', metavar='N')
     parser.add_argument('--conditions_per_patient', type=tuple, nargs=2, default=(3, 10), help='min and max number of conditions to be generated for each patient (default: %(default)s).', metavar=('MIN', 'MAX'))
     parser.add_argument('--trials_per_conditions', type=tuple, nargs=2, default=(0, 5), help='min and max number of trials to be generated for each condition of a patient (default: %(default)s).', metavar=('MIN', 'MAX'))
@@ -104,11 +104,11 @@ if __name__ == '__main__':
     
     # Save to json file
     data = {'Conditions': conditions, 'Therapies': therapies, 'Patients': patients}
-    os.makedirs(os.path.dirname(args.out_path), exist_ok=True)
-    with open(args.out_path, 'w') as f:
+    os.makedirs(args.out_dir, exist_ok=True)
+    with open(f'{args.out_dir}/dataset.json', 'w') as f:
         json.dump(data, f, separators=(',', ':'))
-    with open(f'{os.path.dirname(args.out_path)}/test.csv', 'w') as f:
+    with open(f'{args.out_dir}/test.csv', 'w') as f:
         f.write('patient_id,condition_id\n')
         for patient_id, condition_id in test_cases: 
             f.write(f'{patient_id},{condition_id}\n')
-    print(f'Generated dataset saved into {args.out_path}.')
+    print(f'Generated dataset saved into {args.out_dir}.')
