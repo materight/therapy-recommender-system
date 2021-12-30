@@ -72,7 +72,7 @@ def gen_patients(faker, conditions, therapies, n_patients, n_test_patients, cond
                 end = faker.date_between(start_date=start, end_date=cured if is_cured else max_date)
                 therapy = np.random.choice(therapies)
                 successfull = np.random.randint(0, 100)
-                patient_trials.append({'id': f'tr{trials_id}', 'start': start.strftime('%Y%m%d'), 'end': end.strftime('%Y%m%d'), 'condition': condition['id'], 'therapy': therapy['id'], 'successfull': f'{successfull}'})
+                patient_trials.append({'id': f'tr{trials_id}', 'start': start.strftime('%Y%m%d'), 'end': end.strftime('%Y%m%d'), 'condition': f'pc{patient_condition_id}', 'therapy': therapy['id'], 'successfull': f'{successfull}'})
                 trials_id += 1
         patients.append({'id': patient_id, 'name': name, 'conditions': patient_conditions, 'trials': patient_trials})
     return patients, test_cases
@@ -82,7 +82,7 @@ if __name__ == '__main__':
     # Script arguments
     parser = argparse.ArgumentParser(description='Generate a synthetic dataset of patients with conditions.', formatter_class=lambda prog: argparse.HelpFormatter(prog, max_help_position=42))
     parser.add_argument('-o', '--out', dest='out_dir', type=str, default='./data/generated', help='path of the output file (default: %(default)s).', metavar='PATH')
-    parser.add_argument('--n_patients', type=int, default=1000, help='number of patients to be generated (default: %(default)s).', metavar='N')
+    parser.add_argument('--n_patients', type=int, default=10000, help='number of patients to be generated (default: %(default)s).', metavar='N')
     parser.add_argument('--n_test', type=int, default=3, help='number of test patients to be generated, with an uncured condition (default: %(default)s).', metavar='N')
     parser.add_argument('--conditions_per_patient', type=tuple, nargs=2, default=(3, 10), help='min and max number of conditions to be generated for each patient (default: %(default)s).', metavar=('MIN', 'MAX'))
     parser.add_argument('--trials_per_conditions', type=tuple, nargs=2, default=(0, 5), help='min and max number of trials to be generated for each condition of a patient (default: %(default)s).', metavar=('MIN', 'MAX'))
