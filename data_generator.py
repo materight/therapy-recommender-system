@@ -33,16 +33,16 @@ def fetch_therapies():
     return therapies
 
 
-def gen_conditions(conditions):
+def gen_conditions(conditions_names, n_conditions):
     ls = []
-    for i, name in enumerate(tqdm(conditions, desc='Generating conditions')):
+    for i, name in enumerate(tqdm(conditions_names[:n_conditions], desc='Generating conditions')):
         ls.append({'id': f'Cond{i}', 'name': name, 'type': name})
     return ls
 
 
-def gen_therapies(therapies):
+def gen_therapies(therapies_names, n_therapies):
     ls = []
-    for i, name in enumerate(tqdm(therapies, desc='Generating therapies')):
+    for i, name in enumerate(tqdm(therapies_names[:n_therapies], desc='Generating therapies')):
         ls.append({'id': f'Th{i}', 'name': name, 'type': name})
     return ls
 
@@ -83,12 +83,18 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Generate a synthetic dataset of patients with conditions.', formatter_class=lambda prog: argparse.HelpFormatter(prog, max_help_position=42))
     parser.add_argument('-o', '--out', dest='out_dir', type=str, default='./data/generated', help='path of the output file (default: %(default)s).', metavar='PATH')
     parser.add_argument('--n_patients', type=int, default=10000, help='number of patients to be generated (default: %(default)s).', metavar='N')
-    parser.add_argument('--n_test', type=int, default=3, help='number of test patients to be generated, with an uncured condition (default: %(default)s).', metavar='N')
-    parser.add_argument('--conditions_per_patient', type=tuple, nargs=2, default=(3, 20), help='min and max number of conditions to be generated for each patient (default: %(default)s).', metavar=('MIN', 'MAX'))
+    parser.add_argument('--n_test', type=int, default=3, help='number of test patients with an uncured condition to be generated (default: %(default)s).', metavar='N')
+    parser.add_argument('--n_conditions', type=int, default=np.inf, help='maximum number of conditions to be generated (default: %(default)s).', metavar='N')
+    parser.add_argument('--n_therapies', type=int, default=np.inf, help='maximum number of therapies to be generated (default: %(default)s).', metavar='N')
+    parser.add_argument('--conditions_per_patient', type=tuple, nargs=2, default=(1, 20), help='min and max number of conditions to be generated for each patient (default: %(default)s).', metavar=('MIN', 'MAX'))
     parser.add_argument('--trials_per_conditions', type=tuple, nargs=2, default=(0, 10), help='min and max number of trials to be generated for each condition of a patient (default: %(default)s).', metavar=('MIN', 'MAX'))
     parser.add_argument('--prob_cured', type=int, default=90, help='probability for a condition to be cured (default: %(default)s). Must be a value between 0 and 100.', metavar='P')
     parser.add_argument('--seed', type=int, default=0, help='random seed used in the generation (default: %(default)s).', metavar='S')
+    # Set default values for debugging
+    parser.set_defaults(n_conditions=50, n_therapies=20)
     args = parser.parse_args()
+
+    
 
     # Initialize fake data generation
     faker = Faker()
@@ -98,8 +104,8 @@ if __name__ == '__main__':
     therapies_names = fetch_therapies()
 
     # Generate main tables
-    conditions = gen_conditions(conditions_names)
-    therapies = gen_therapies(therapies_names)
+    conditions = gen_conditions(conditions_names, args.n_conditions)
+    therapies = gen_therapies(therapies_names, args.n_therapies)
     patients, test_cases = gen_patients(faker, conditions, therapies, n_patients=args.n_patients, n_test_patients=args.n_test, conditions_per_patient_range=args.conditions_per_patient, trials_per_condition_range=args.trials_per_conditions, prob_cured_condition=args.prob_cured)
     
     # Save to json file
