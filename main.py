@@ -47,6 +47,7 @@ def trials_similarity(patient_id, condition_id, dataset, normalized=True):
     candidate_therapies = candidate_therapies[['condition', 'therapy', 'successfull', 'similarity']]
     # Compute final scaore combining similarity and success rate
     candidate_therapies['score'] = candidate_therapies.similarity * (candidate_therapies.successfull/100)
+    candidate_therapies = candidate_therapies.drop_duplicates()
     candidate_therapies = candidate_therapies.sort_values('score', ascending=False)
     return target_trials, candidate_trials, candidate_therapies
 
@@ -78,6 +79,7 @@ def patients_similarity(patient_id, condition_id, dataset):
     candidate_therapies = candidate_therapies.merge(patients_similarities, how='left', left_on='patient', right_on='patient')
     # Compute final score combining similarity and success rate
     candidate_therapies['score'] = candidate_therapies.similarity * (candidate_therapies.successfull/100)
+    candidate_therapies = candidate_therapies.drop_duplicates()
     candidate_therapies = candidate_therapies.sort_values('score', ascending=False)
     return patients_similarities, candidate_therapies
 
