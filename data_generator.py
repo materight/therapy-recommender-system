@@ -65,7 +65,6 @@ def gen_patients(faker, conditions, therapies, n_patients, n_test_patients, cond
             patient_conditions.append({'id': f'pc{patient_condition_id}', 'diagnosed': diagnosed.strftime('%Y%m%d'), 'cured': cured.strftime('%Y%m%d') if is_cured else None, 'kind': condition['id']})
             if is_test_condition:
                 test_cases.append((patient_id, f'pc{patient_condition_id}'))
-            patient_condition_id += 1
             # Generate trials of condition
             for _ in range(np.random.randint(*trials_per_condition_range)): # How many trials per condition 
                 start = faker.date_between(start_date=diagnosed, end_date=cured if is_cured else max_date)
@@ -74,6 +73,7 @@ def gen_patients(faker, conditions, therapies, n_patients, n_test_patients, cond
                 successfull = np.random.randint(0, 100)
                 patient_trials.append({'id': f'tr{trials_id}', 'start': start.strftime('%Y%m%d'), 'end': end.strftime('%Y%m%d'), 'condition': f'pc{patient_condition_id}', 'therapy': therapy['id'], 'successfull': f'{successfull}'})
                 trials_id += 1
+            patient_condition_id += 1
         patients.append({'id': patient_id, 'name': name, 'conditions': patient_conditions, 'trials': patient_trials})
     return patients, test_cases
 
