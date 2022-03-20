@@ -1,26 +1,27 @@
 import pandas as pd
 import editdistance
+from typing import List
+
+from recommender.dataset import Dataset
 
 class BaseRecommender:
     """Base class for all recommender algorithms."""
-    def __init__(self):
-        pass
 
-    def fit(self, dataset):
+    def fit(self, dataset: Dataset):
         """Fit the recommender algorithm to the given data."""
-        pass
+        raise NotImplemented
 
-    def predict(self, patient_id, condition_id):
-        """Recommend a list of therapies with their predicted usccess rates."""
-        pass
+    def predict(self, patient_id: str, condition_id: str):
+        """Recommend a list of k therapies with a predicted success rate."""
+        raise NotImplemented
     
     @staticmethod
-    def _get_trials(p_trials, condition_ids):
+    def _get_trials(p_trials, condition_ids: List[str]):
         """Return the trials of the given conditions."""
         return p_trials[p_trials.condition.isin(condition_ids)]
 
     @staticmethod
-    def _get_trials_vectors(p_trials, therapies):
+    def _get_trials_vectors(p_trials: pd.DataFrame, therapies: pd.DataFrame):
         """Convert the given conditions in p_trials to a feature vector, where 
            columns=therapies and values=successful score."""
         features = p_trials.pivot_table(index='condition', columns='therapy', values='successful', fill_value=0).astype(int)
@@ -28,13 +29,13 @@ class BaseRecommender:
         return features
 
     @staticmethod
-    def _get_trials_sequences(p_trials):
+    def _get_trials_sequences(p_trials: pd.DataFrame):
         """Convert the given conditions in p_trials to a list of trials, ordered by start or end time."""
         sequences = p_trials.groupby(['condition'], observed=True)['therapy'].apply(list)
         return sequences
 
     @staticmethod
-    def _jaccard_similarity(target_item, other_items):
+    def _jaccard_similarity(target_item: pd.DataFrame, other_items: pd.DataFrame):
         """Compute the Jaccard similarity between the target item and all the other items."""
         assert target_item.shape[0] == 1, 'target_item must contain 1 element'
         other_index = other_items.index
@@ -46,7 +47,7 @@ class BaseRecommender:
         return similarities
 
     @staticmethod
-    def _cosine_similarity(target_item, other_items):
+    def _cosine_similarity(target_item: pd.DataFrame, other_items: pd.DataFrame):
         """Compute the cosine similarity between the target item and all the other items."""
         assert target_item.shape[0] == 1, 'target_item must contain 1 element'
         other_index = other_items.index
@@ -56,7 +57,7 @@ class BaseRecommender:
         return None
 
     @staticmethod
-    def _levenshtein_similarity(target_item, other_items):
+    def _levenshtein_similarity(target_item: pd.DataFrame, other_items: pd.DataFrame):
         """Compute the Levenshtein distance between the target item and all the other items."""
         assert target_item.shape[0] == 1, 'target_item must contain 1 element'
         target_sequence = target_item.iloc[0]

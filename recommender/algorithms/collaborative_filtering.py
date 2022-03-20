@@ -4,16 +4,17 @@ import pandas as pd
 from .utils import BaseRecommender
 
 class CollaborativeFilteringRecommender(BaseRecommender):
-    def __init__(self, similarity):
+    def __init__(self, similarity: str, n_neighbors: int):
         """
         Collaborative filtering recommender.
 
         Args:
-            similarity (str, optional): Which similarity to use. Supported values: 'levenshtein', 'cosine'.
+            similarity (str): Which similarity to use. Supported values: 'levenshtein', 'cosine'.
+            n_neightbors (int): Number of similar conditions to consider when computing the rating average.
         """
         super().__init__()
         self.similarity = similarity
-
+        self.n_neighbors = n_neighbors
 
     def fit(self, dataset):
         self.dataset = dataset
@@ -22,7 +23,7 @@ class CollaborativeFilteringRecommender(BaseRecommender):
         # - M is the number of available therapies (i.e. the "items")
         self.utility = self._get_trials_vectors(dataset.p_trials, dataset.therapies)
 
-    def _get_top_similar_k(self, condition_id, k):
+    def _get_top_similar_k(self, condition_id: str):
         """Compute the k most similar conditions to the given one."""
         # Get trials of condition_id
         # TODO: distance based n k-grams
@@ -32,7 +33,7 @@ class CollaborativeFilteringRecommender(BaseRecommender):
             # Compute Jaccard similarity between the given condition and all the other conditions to reduce the number of conditons to consider to compute the Levenshtein distance
             similarities = self._jaccard_similarity(target_features, other_features)
             # Compute sorted sequence of trials from the most similar conditions
-            relevant_conditions = similarities.nlargest(k * 10).index
+            relevant_conditions = similarities.nlargest(self.n_neighbors * 10).index # TODO: change this k*10 to something else, understand relation between Jaccard distance and edit distance
             target_sequence = self._get_trials_sequences(self._get_trials(self.dataset.p_trials, [condition_id]))
             other_sequences = self._get_trials_sequences(self._get_trials(self.dataset.p_trials, relevant_conditions))
             similarities = self._levenshtein_similarity(target_sequence, other_sequences)
@@ -40,10 +41,10 @@ class CollaborativeFilteringRecommender(BaseRecommender):
             # TODO: finish implement cosine similarity
             # TODO: add nomrlaization for cosine, subtract aveage value
             similarities = self._cosine_similarity(target_features, other_features)
-        top_k = similarities.nlargest(k)
+        top_k = similarities.nlargest(self.n_neighbors)
         return top_k
 
-    def _predict_ratings(self, condition_id, top_k):
+    def _predict_ratings(self, condition_id: str, top_k: pd.DataFrame):
         """Predict the therapy ratings using the given k most similar conditions."""
         top_k_ratings = self.utility.loc[top_k.index] # Get the ratings of the top k similar conditions
         # Generate matrix of weigths to be applied. Weights are the similairty scores
@@ -55,8 +56,9 @@ class CollaborativeFilteringRecommender(BaseRecommender):
         pred_ratings = weighted_ratings.sum(axis='index') / weights.sum(axis='index')
         return pred_ratings
 
-    def predict(self, patient_id, condition_id, k=50):
+    def predict(self, patient_id: str, condition_id: str):
         # Get top-k conditions
-        top_k = self._get_top_similar_k(condition_id, k)
+        top_k = self._get_top_similar_k(condition_id)
         # Compute ratings predictions
         pred_ratings = self._predict_ratings(condition_id, top_k)
+        return pred_ratings
