@@ -2,12 +2,11 @@ import json
 import numpy as np
 import pandas as pd
 
-'''
-Helper class for loading the dataset and convert it to multiple pandas dataframes.
-'''
+
 class Dataset():
+    """Helper class for loading the dataset and convert it to multiple pandas dataframes."""
     
-    def __init__(self, dataset_path):
+    def __init__(self, dataset_path: str):
         with open(dataset_path, 'r') as f:
             data = json.load(f)
         conditions = pd.DataFrame.from_dict(data['Conditions']).set_index('id')
@@ -21,10 +20,12 @@ class Dataset():
             patients.append(p)
         patients = pd.DataFrame.from_dict(patients).set_index('id')
         p_conditions = pd.DataFrame.from_dict(p_conditions).astype({'kind': 'category'}).set_index(['patient', 'id'])
-        p_trials = pd.DataFrame.from_dict(p_trials).astype({'condition': 'category', 'therapy': 'category', 'successfull': int}).set_index(['patient', 'id'])
+        p_trials = pd.DataFrame.from_dict(p_trials).astype({'condition': 'category', 'therapy': 'category', 'successful': int}).set_index(['patient', 'id'])
         
         # Post-processing
+        p_conditions.replace({'cured': 'Null'}, value=np.nan, inplace=True)
         p_conditions['diagnosed'], p_conditions['cured'] = pd.to_datetime(p_conditions['diagnosed']), pd.to_datetime(p_conditions['cured'])
+        p_trials.replace({'end': 'Null'}, value=np.nan, inplace=True)
         p_trials['start'], p_trials['end'] = pd.to_datetime(p_trials['start']), pd.to_datetime(p_trials['end'])
         
         # Store dataframes

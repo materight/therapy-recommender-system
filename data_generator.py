@@ -116,8 +116,8 @@ def gen_patients(faker, conditions, therapies, n_patients, n_test_patients, cond
                 start = faker.date_between(start_date=diagnosed, end_date=cured if is_cured else max_date)
                 end = faker.date_between(start_date=start, end_date=cured if is_cured else max_date)
                 therapy = np.random.choice(therapies)
-                successfull = np.random.randint(0, 100)
-                trial = {'id': f'tr{trials_id}', 'start': start.strftime('%Y%m%d'), 'end': end.strftime('%Y%m%d'), 'condition': f'pc{patient_condition_id}', 'therapy': therapy['id'], 'successfull': f'{successfull}'}
+                successful = np.random.randint(0, 100)
+                trial = {'id': f'tr{trials_id}', 'start': start.strftime('%Y%m%d'), 'end': end.strftime('%Y%m%d'), 'condition': f'pc{patient_condition_id}', 'therapy': therapy['id'], 'successful': f'{successful}'}
                 if not no_additional_info:
                     trial['side_effect'] = np.random.choice(['constipation', 'dermatitis', 'diziness', 'drowsiness', 'fatigue', 'headache', 'insomnia', 'nausea', 'weight loss', 'dry mouth'])
                 patient_trials.append(trial)
@@ -142,7 +142,7 @@ if __name__ == '__main__':
     # Script arguments
     parser = argparse.ArgumentParser(description='Generate a synthetic dataset of patients with conditions.', formatter_class=lambda prog: argparse.HelpFormatter(prog, max_help_position=42))
     parser.add_argument('-o', '--out', dest='out_dir', type=str, default='./data/generated', help='path of the output file (default: %(default)s).', metavar='PATH')
-    parser.add_argument('--n-patients', type=int, default=50000, help='number of patients to be generated (default: %(default)s).', metavar='N')
+    parser.add_argument('--n-patients', type=int, default=5000, help='number of patients to be generated (default: %(default)s).', metavar='N')
     parser.add_argument('--n-test', type=int, default=3, help='number of test patients with an uncured condition to be generated (default: %(default)s).', metavar='N')
     parser.add_argument('--n-conditions', type=int, default=np.inf, help='maximum number of conditions to be generated (default: %(default)s).', metavar='N')
     parser.add_argument('--n-therapies', type=int, default=np.inf, help='maximum number of therapies to be generated (default: %(default)s).', metavar='N')
@@ -174,7 +174,7 @@ if __name__ == '__main__':
     with open(f'{args.out_dir}/dataset.json', 'w') as f:
         json.dump(data, f, separators=(',', ':'))
     with open(f'{args.out_dir}/test.csv', 'w') as f:
-        f.write('patient_id,condition_id\n')
+        f.write('PatientID\tPatient Condition\n')
         for patient_id, condition_id in test_cases: 
-            f.write(f'{patient_id},{condition_id}\n')
+            f.write(f'{patient_id}\t{condition_id}\n')
     print(f'Generated dataset saved into {args.out_dir}.')

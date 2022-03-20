@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 import editdistance
 
+from recommender.algorithms import CollaborativeFilteringRecommender
 from recommender.dataset import Dataset
 
 def svd(p_trials):
@@ -24,9 +25,9 @@ def p_conditions_features(dataset):
 
 
 def trials_similarity(patient_id, condition_id, dataset, normalized=True):
-    condition_kind = dataset.p_conditions.loc[(patient_id, condition_id), 'kind']
     merged_trials = dataset.p_trials.merge(dataset.p_conditions, how='left', left_on=['patient', 'condition'], right_on=['patient', 'id'])
     target_trials = merged_trials.loc[patient_id].pipe(lambda df: df[df.condition == condition_id]).sort_values('start')['therapy'].to_list()
+    condition_kind = dataset.p_conditions.loc[(patient_id, condition_id), 'kind']
     candidate_trials = merged_trials[(merged_trials.index != patient_id) & (merged_trials.condition != condition_id) & (merged_trials.kind == condition_kind)]
     candidate_trials = candidate_trials.groupby(['patient', 'condition']).apply(lambda p: p.sort_values('start')['therapy'].to_list())
     candidate_trials = candidate_trials.rename('therapies').to_frame()
@@ -85,18 +86,27 @@ def patients_similarity(patient_id, condition_id, dataset):
 
 
 if __name__ == '__main__':
+    """
+    New ideas to try:
+    - Content-based: define a profile for therapies, compute a profile for each condition as average of the therapies applied for it (weigthed by their success), and finally
+                     compute a patient profile as average of the profiles of the conditions he has. Then, suggest a therapy based on the distance between the patient profile or the
+                     condition profile.
+    """
+
+
     # Script arguments
     parser = argparse.ArgumentParser(description='Therapy recommender system.', formatter_class=lambda prog: argparse.HelpFormatter(prog, max_help_position=42))
     #parser.add_argument('dataset_path', type=str, help='path to the dataset file.', default='./data/generated/dataset.json')
-    #parser.add_argument('patient_id', type=int, help='id of the patient for which to compute the recommendation.')
+    #parser.add_argument('patient_id', type=str, help='id of the patient for which to compute the recommendation.')
     #parser.add_argument('condition_id', type=str, help='id of the condition of the patient for which to compute the recommendation.')
     
     #TODO: remove
-    tests = pd.read_csv('data/generated/test.csv')
+    dataset_path = './data/generated'
+    tests = pd.read_csv(f'{dataset_path}/test.csv', sep='\t')
     patient_id, condition_id = tests.iloc[0]
-    parser.set_defaults(dataset_path='./data/generated/dataset.json')
-    parser.set_defaults(patient_id=patient_id)
-    parser.set_defaults(condition_id=condition_id)
+    parser.set_defaults(dataset_path=f'{dataset_path}/dataset.json')
+    parser.set_defaults(patient_id=str(patient_id))
+    parser.set_defaults(condition_id=str(condition_id))
     #TODO: remove
 
     args = parser.parse_args()
@@ -105,13 +115,16 @@ if __name__ == '__main__':
     print('Loading dataset...')
     dataset = Dataset(args.dataset_path)
 
-    # Compute trials similarities
-    print('Computing trials history similarities...')
-    target_trials, candidate_trials, candidate_therapies1 = trials_similarity(args.patient_id, args.condition_id, dataset)
+    collaborative_filtering = CollaborativeFilteringRecommender()
+    collaborative_filtering.fit(dataset)
+
+    # # Compute trials similarities
+    # print('Computing trials history similarities...')
+    # target_trials, candidate_trials, candidate_therapies1 = trials_similarity(args.patient_id, args.condition_id, dataset)
     
-    # Compute patients similarities
-    print('Computing patients similarities...')
-    patients_similarities, candidate_therapies2 = patients_similarity(args.patient_id, args.condition_id, dataset)
+    # # Compute patients similarities
+    # print('Computing patients similarities...')
+    # patients_similarities, candidate_therapies2 = patients_similarity(args.patient_id, args.condition_id, dataset)
     
     print('Done')
 
