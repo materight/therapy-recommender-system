@@ -18,9 +18,16 @@ class Dataset():
             p_conditions.extend([{'patient': p['id'], **c} for c in p.pop('conditions')])
             p_trials.extend([{'patient': p['id'], **t} for t in p.pop('trials')])
             patients.append(p)
-        patients = pd.DataFrame.from_dict(patients).set_index('id')
-        p_conditions = pd.DataFrame.from_dict(p_conditions).astype({'kind': 'category'}).set_index(['patient', 'id'])
-        p_trials = pd.DataFrame.from_dict(p_trials).astype({'condition': 'category', 'therapy': 'category', 'successful': int}).set_index(['patient', 'id'])
+        
+        # Create dataframes
+        patients = pd.DataFrame.from_dict(patients) \
+                     .set_index('id')
+        p_conditions = pd.DataFrame.from_dict(p_conditions) \
+                         .astype({'patient': 'category', 'kind': 'category'}) \
+                         .set_index(['patient', 'id'])
+        p_trials = pd.DataFrame.from_dict(p_trials) \
+                     .astype({'patient': 'category', 'condition': 'category', 'therapy': 'category', 'successful': int}) \
+                     .set_index(['patient', 'id'])
         
         # Post-processing
         p_conditions.replace({'cured': 'Null'}, value=np.nan, inplace=True)

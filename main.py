@@ -115,8 +115,10 @@ if __name__ == '__main__':
     print('Loading dataset...')
     dataset = Dataset(args.dataset_path)
 
-    collaborative_filtering = CollaborativeFilteringRecommender()
+    print('Run rec')
+    collaborative_filtering = CollaborativeFilteringRecommender(similarity='levenshtein')
     collaborative_filtering.fit(dataset)
+    collaborative_filtering.predict(args.patient_id, args.condition_id)
 
     # # Compute trials similarities
     # print('Computing trials history similarities...')
