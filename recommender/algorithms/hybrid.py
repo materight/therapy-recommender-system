@@ -19,6 +19,7 @@ class HybridRecommender(BaseRecommender):
             recommender.fit(dataset)
 
     def predict(self, patient_id: str, condition_id: str):
+        # TODO: rank aggregation (check: https://people.orie.cornell.edu/dpw/talks/RankAggDec2012.pdf)
         results = []
         for recommender in self.recommenders:
             result = recommender.predict(patient_id, condition_id)

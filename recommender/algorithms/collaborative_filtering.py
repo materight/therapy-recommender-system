@@ -29,6 +29,7 @@ class CollaborativeFilteringRecommender(BaseRecommender):
         # TODO: distance based n k-grams
         target_features = self.utility[self.utility.index == condition_id]
         other_features = self.utility[self.utility.index != condition_id]
+        other_features = other_features[~(other_features == 0).all(axis=1)] # Remove conditions with no trials
         if self.similarity == 'levenshtein':
             # Compute Jaccard similarity between the given condition and all the other conditions to reduce the number of conditons to consider to compute the Levenshtein distance
             similarities = self._jaccard_similarity(target_features, other_features)
@@ -38,8 +39,6 @@ class CollaborativeFilteringRecommender(BaseRecommender):
             other_sequences = self._get_trials_sequences(self._get_trials(self.dataset.p_trials, relevant_conditions))
             similarities = self._levenshtein_similarity(target_sequence, other_sequences)
         elif self.similarity == 'cosine':
-            # TODO: finish implement cosine similarity
-            # TODO: add nomrlaization for cosine, subtract aveage value
             similarities = self._cosine_similarity(target_features, other_features)
         top_k = similarities.nlargest(self.n_neighbors)
         return top_k
@@ -49,11 +48,12 @@ class CollaborativeFilteringRecommender(BaseRecommender):
         top_k_ratings = self.utility.loc[top_k.index] # Get the ratings of the top k similar conditions
         # Generate matrix of weigths to be applied. Weights are the similairty scores
         weights = pd.concat([top_k] * len(self.dataset.therapies), axis=1)
-        weights.columns = self.dataset.therapies.index # 
+        weights.columns = self.dataset.therapies.index
         weights[top_k_ratings == 0] = 0 # Set weights of empty ratings to 0
         # Compute weighted average of weights
         weighted_ratings = top_k_ratings * weights # Multiply every rating by the similarity score
         pred_ratings = weighted_ratings.sum(axis='index') / weights.sum(axis='index')
+        pred_ratings = pred_ratings.fillna(0)
         return pred_ratings
 
     def predict(self, patient_id: str, condition_id: str):

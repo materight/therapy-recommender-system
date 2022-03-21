@@ -42,7 +42,8 @@ if __name__ == '__main__':
 
     print('Init recommender...')
     recommender = HybridRecommender([
-        CollaborativeFilteringRecommender(similarity='levenshtein', n_neighbors=50)
+        CollaborativeFilteringRecommender(similarity='levenshtein', n_neighbors=50),
+        CollaborativeFilteringRecommender(similarity='cosine', n_neighbors=50),
     ])
 
     print('Fit recommender on dataset...')

@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 import editdistance
 from typing import List
@@ -47,14 +48,22 @@ class BaseRecommender:
         return similarities
 
     @staticmethod
-    def _cosine_similarity(target_item: pd.DataFrame, other_items: pd.DataFrame):
+    def _cosine_similarity(target_item: pd.DataFrame, other_items: pd.DataFrame, centered: bool = True):
         """Compute the cosine similarity between the target item and all the other items."""
         assert target_item.shape[0] == 1, 'target_item must contain 1 element'
         other_index = other_items.index
         target_item, other_items = target_item.values, other_items.values
-        dot_prod = other_items @ target_item.T # Compute dot product between target_item and all other_items
-        # TODO        
-        return None
+        # Normalize using rows means (centered cosine similarity)
+        if centered:
+            target_item = target_item - np.nanmean(np.where(target_item == 0, np.nan, target_item), axis=1, keepdims=True)
+            other_items = other_items - np.nanmean(np.where(other_items == 0, np.nan, other_items), axis=1, keepdims=True)
+        # Compute cosine similarity
+        dot_prods = (other_items @ target_item.T).ravel() # Compute dot product between target_item and all other_items
+        target_norm = np.linalg.norm(target_item, ord=2, axis=1)
+        other_norms = np.linalg.norm(other_items, ord=2, axis=1)
+        similarities = dot_prods / (target_norm * other_norms)
+        similarities = pd.Series(similarities, index=other_index)     
+        return similarities
 
     @staticmethod
     def _levenshtein_similarity(target_item: pd.DataFrame, other_items: pd.DataFrame):
