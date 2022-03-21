@@ -23,5 +23,6 @@ class HybridRecommender(BaseRecommender):
         results = []
         for recommender in self.recommenders:
             result = recommender.predict(patient_id, condition_id)
+            result = result.sort_values(ascending=False)
             results.append(result)
         return results[0]
