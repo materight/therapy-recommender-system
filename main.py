@@ -27,7 +27,7 @@ if __name__ == '__main__':
     #parser.add_argument('condition_id', type=str, help='id of the condition of the patient for which to compute the recommendation.')
     
     #TODO: remove
-    dataset_path = './data/final'
+    dataset_path = './data/generated'
     tests = pd.read_csv(f'{dataset_path}/test.csv', sep='\t')
     patient_id, condition_id = tests.iloc[0]
     parser.set_defaults(dataset_path=f'{dataset_path}/dataset.json')
