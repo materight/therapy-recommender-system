@@ -37,6 +37,7 @@ class Dataset():
         
         # Generate validation split, using last trials from a subset of conditions and patients
         val_patients_idx = patients.sample(frac=val_ratio).index
+        val_patients_idx = val_patients_idx.intersection(p_conditions.index.get_level_values('patient'))
         val_conditions_idx = p_conditions.loc[val_patients_idx].sample(frac=val_ratio).index
         val_trials_idx = p_trials[p_trials.condition.isin(val_conditions_idx.get_level_values('id'))] \
                         .reset_index() \
@@ -46,7 +47,6 @@ class Dataset():
         val_trials_mask = p_trials.index.get_level_values('id').isin(val_trials_idx)
         val_trials = p_trials[val_trials_mask]
         p_trials = p_trials[~val_trials_mask]
-
 
         # Store dataframes
         self.patients = patients

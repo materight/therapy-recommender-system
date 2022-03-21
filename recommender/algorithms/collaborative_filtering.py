@@ -22,6 +22,12 @@ class CollaborativeFilteringRecommender(BaseRecommender):
         # - N is the number of conditions of each patient (i.e. the "users")
         # - M is the number of available therapies (i.e. the "items")
         self.utility = self._get_trials_vectors(dataset.p_trials, dataset.therapies)
+        # Compute global baseline estimates
+        global_avg_rating = np.nanmean(self.utility)
+        users_rating_deviation = global_avg_rating - self.utility.mean(axis=1, skipna=True).values
+        items_rating_deviation = global_avg_rating - self.utility.mean(axis=0, skipna=True).values
+        self.global_baseline = global_avg_rating + (users_rating_deviation.reshape(-1,1) + items_rating_deviation.reshape(1,-1))
+        self.global_baseline = pd.DataFrame(self.global_baseline, index=self.utility.index, columns=self.utility.columns)
 
     def _get_top_similar_k(self, condition_id: str):
         """Compute the k most similar conditions to the given one."""
@@ -29,7 +35,6 @@ class CollaborativeFilteringRecommender(BaseRecommender):
         # TODO: distance based n k-grams
         target_features = self.utility[self.utility.index == condition_id]
         other_features = self.utility[self.utility.index != condition_id]
-        other_features = other_features[~(other_features == 0).all(axis=1)] # Remove conditions with no trials
         if self.similarity == 'levenshtein':
             # Compute Jaccard similarity between the given condition and all the other conditions to reduce the number of conditons to consider to compute the Levenshtein distance
             similarities = self._jaccard_similarity(target_features, other_features)
@@ -43,22 +48,23 @@ class CollaborativeFilteringRecommender(BaseRecommender):
         top_k = similarities.nlargest(self.n_neighbors)
         return top_k
 
-    def _predict_ratings(self, condition_id: str, top_k: pd.DataFrame):
+    def _predict_ratings(self, condition_id: str, top_k_similarities: pd.DataFrame):
         """Predict the therapy ratings using the given k most similar conditions."""
-        top_k_ratings = self.utility.loc[top_k.index] # Get the ratings of the top k similar conditions
+        top_k_ratings = self.utility.loc[top_k_similarities.index] # Get the ratings of the top k similar conditions
         # Generate matrix of weigths to be applied. Weights are the similairty scores
-        weights = pd.concat([top_k] * len(self.dataset.therapies), axis=1)
-        weights.columns = self.dataset.therapies.index
-        weights[top_k_ratings == 0] = 0 # Set weights of empty ratings to 0
+        weights = np.tile(top_k_similarities.values.reshape(-1, 1), len(self.dataset.therapies))
+        weights = pd.DataFrame(weights, index=top_k_ratings.index, columns=self.dataset.therapies.index)
+        weights[top_k_ratings.isna()] = 0 # Set weights of empty ratings to 0
+        # TODO: use global baseline estimates
         # Compute weighted average of weights
-        weighted_ratings = top_k_ratings * weights # Multiply every rating by the similarity score
+        weighted_ratings = weights * (top_k_ratings)  # Multiply every rating by the similarity score
         pred_ratings = weighted_ratings.sum(axis='index') / weights.sum(axis='index')
         pred_ratings = pred_ratings.fillna(0)
         return pred_ratings
 
     def predict(self, patient_id: str, condition_id: str):
         # Get top-k conditions
-        top_k = self._get_top_similar_k(condition_id)
+        top_k_similarities = self._get_top_similar_k(condition_id)
         # Compute ratings predictions
-        pred_ratings = self._predict_ratings(condition_id, top_k)
+        pred_ratings = self._predict_ratings(condition_id, top_k_similarities)
         return pred_ratings

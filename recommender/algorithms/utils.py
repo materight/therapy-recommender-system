@@ -25,14 +25,14 @@ class BaseRecommender:
     def _get_trials_vectors(p_trials: pd.DataFrame, therapies: pd.DataFrame):
         """Convert the given conditions in p_trials to a feature vector, where 
            columns=therapies and values=successful score."""
-        features = p_trials.pivot_table(index='condition', columns='therapy', values='successful', fill_value=0).astype(int)
-        features = features.reindex(columns=therapies.index, fill_value=0)
+        features = p_trials.pivot_table(index='condition', columns='therapy', values='successful')
+        features = features.reindex(columns=therapies.index)
         return features
 
     @staticmethod
     def _get_trials_sequences(p_trials: pd.DataFrame):
-        """Convert the given conditions in p_trials to a list of trials, ordered by start or end time."""
-        sequences = p_trials.groupby(['condition'], observed=True)['therapy'].apply(list)
+        """Convert the given conditions in p_trials to a list of trials, ordered by start time."""
+        sequences = p_trials.sort_values('start').groupby(['condition'], observed=True)['therapy'].apply(list)
         return sequences
 
     @staticmethod
@@ -40,7 +40,7 @@ class BaseRecommender:
         """Compute the Jaccard similarity between the target item and all the other items."""
         assert target_item.shape[0] == 1, 'target_item must contain 1 element'
         other_index = other_items.index
-        target_item, other_items = target_item.values.astype(bool), other_items.values.astype(bool)
+        target_item, other_items = target_item.fillna(0).values.astype(bool), other_items.fillna(0).values.astype(bool)
         intersection = (target_item & other_items).sum(axis=1)
         union = (target_item | other_items).sum(axis=1)
         similarities = intersection / union
@@ -48,25 +48,25 @@ class BaseRecommender:
         return similarities
 
     @staticmethod
-    def _cosine_similarity(target_item: pd.DataFrame, other_items: pd.DataFrame, centered: bool = True):
-        """Compute the cosine similarity between the target item and all the other items."""
+    def _cosine_similarity(target_item: pd.DataFrame, other_items: pd.DataFrame):
+        """Compute the centered cosine similarity (pearson correlation) between the target item and all the other items."""
+        # TODO: check NaN values handling
         assert target_item.shape[0] == 1, 'target_item must contain 1 element'
         other_index = other_items.index
-        target_item, other_items = target_item.values.astype(float), other_items.values.astype(float)
+        target_item, other_items = target_item.values, other_items.values
         # Normalize using rows means (centered cosine similarity)
-        if centered:
-            target_item[target_item == 0], other_items[other_items == 0] = np.nan, np.nan
-            target_item = target_item - np.nanmean(target_item, axis=1, keepdims=True)
-            other_items = other_items - np.nanmean(other_items, axis=1, keepdims=True)
-            target_item[np.isnan(target_item)], other_items[np.isnan(other_items)] = 0, 0
+        target_item = target_item - np.nanmean(target_item, axis=1, keepdims=True)
+        other_items = other_items - np.nanmean(other_items, axis=1, keepdims=True)
         # Compute cosine similarity
+        target_item[np.isnan(target_item)], other_items[np.isnan(other_items)] = 0, 0 # Set missing ratings to 0
         dot_prods = (other_items @ target_item.T).ravel() # Compute dot product between target_item and all other_items
         target_norm = np.linalg.norm(target_item, ord=2, axis=1)
         other_norms = np.linalg.norm(other_items, ord=2, axis=1)
-        similarities = dot_prods / (target_norm * other_norms)
+        with np.errstate(divide='ignore', invalid='ignore'):
+            similarities = dot_prods / (target_norm * other_norms)
         similarities = pd.Series(similarities, index=other_index)
         similarities = similarities.fillna(-1) # If NaN, it's a vecotr with only zeros
-        similarities = (similarities + 1) / 2 # Rescale to [0, 1] to remove negative values, so that there are no issues when computing the weighted average
+        similarities = 1 + similarities # Translate to positive values, so that there are no issues when using the similarity score in the weighted average
         return similarities
 
     @staticmethod

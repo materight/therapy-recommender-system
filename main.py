@@ -5,18 +5,19 @@ import pandas as pd
 from recommender.algorithms import HybridRecommender, CollaborativeFilteringRecommender
 from recommender.dataset import Dataset
 
-def svd(p_trials):
-    pt_matrix = p_trials.pivot_table(index='patient', columns=['condition', 'therapy'], values='successfull', fill_value=0) # Compute matrix of patient-therapies for SVD
-    u, s, vh = np.linalg.svd(pt_matrix.values, full_matrices=False)
-    reconstructed = (u * s) @ vh
-    return u, s, vh
-
 if __name__ == '__main__':
     """
     New ideas to try:
     - Content-based: define a profile for therapies, compute a profile for each condition as average of the therapies applied for it (weigthed by their success), and finally
                      compute a patient profile as average of the profiles of the conditions he has. Then, suggest a therapy based on the distance between the patient profile or the
                      condition profile.
+    - Dimensionality reduction: Try SVD but also Non-negative Matrix Factorization
+    - Collaborative filtering: try also item-based
+
+    Mtrics for eval:
+    - RMSE
+    - MAE
+    - NDCG (check: https://benjlindsay.com/posts/comparing-collaborative-filtering-methods#algorithm-comparisons)
     """
 
     # Script arguments
@@ -26,7 +27,7 @@ if __name__ == '__main__':
     #parser.add_argument('condition_id', type=str, help='id of the condition of the patient for which to compute the recommendation.')
     
     #TODO: remove
-    dataset_path = './data/generated'
+    dataset_path = './data/final'
     tests = pd.read_csv(f'{dataset_path}/test.csv', sep='\t')
     patient_id, condition_id = tests.iloc[0]
     parser.set_defaults(dataset_path=f'{dataset_path}/dataset.json')
