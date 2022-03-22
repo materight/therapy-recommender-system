@@ -44,6 +44,7 @@ class CollaborativeFilteringRecommender(BaseRecommender):
             similarities = self._levenshtein_similarity(target_sequence, other_sequences)
         elif self.similarity == 'cosine':
             similarities = self._cosine_similarity(target_features, other_features)
+        similarities = similarities[similarities > 0] # Use only items with positive similarities
         top_k = similarities.nlargest(self.n_neighbors)
         return top_k
 
@@ -58,7 +59,6 @@ class CollaborativeFilteringRecommender(BaseRecommender):
         weighted_ratings = weights * (top_k_ratings - self.global_baseline.loc[top_k_ratings.index])  # Multiply every rating by the similarity score
         pred_ratings = weighted_ratings.sum(axis='index') / weights.sum(axis='index')
         pred_ratings = pred_ratings + self.global_baseline.loc[condition_id]
-        pred_ratings = pred_ratings.fillna(0)
         pred_ratings = pred_ratings.clip(0, 100)
         return pred_ratings
 

@@ -66,8 +66,7 @@ class BaseRecommender:
         with np.errstate(divide='ignore', invalid='ignore'):
             similarities = dot_prods / (target_norm * other_norms)
         similarities = pd.Series(similarities, index=other_index)
-        similarities = similarities.fillna(-1) # If NaN, it's a vecotr with only zeros
-        similarities = 1 + similarities # Translate to positive values, so that there are no issues when using the similarity score in the weighted average
+        similarities = similarities.fillna(-1) # If NaN, one of the vectors is zeros-only. Set similarity to -1.
         return similarities
 
     @staticmethod
@@ -79,6 +78,6 @@ class BaseRecommender:
         for condition_id, sequence in other_items.iteritems():
             distance = editdistance.eval(target_sequence, sequence)
             max_len = max(len(target_sequence), len(sequence))
-            similarity = (max_len - distance) / max_len # Convert distance to similarity in [0, 1]
+            similarity = max_len - distance # Convert distance to similarity
             similarities.loc[condition_id] = similarity
         return similarities
