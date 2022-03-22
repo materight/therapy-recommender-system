@@ -2,7 +2,7 @@ import argparse
 import numpy as np
 import pandas as pd
 
-from recommender.algorithms import HybridRecommender, CollaborativeFilteringRecommender
+from recommender.algorithms import (HybridRecommender, CollaborativeFilteringRecommender, LatentFactorRecommender)
 from recommender.dataset import Dataset
 
 if __name__ == '__main__':
@@ -14,8 +14,10 @@ if __name__ == '__main__':
     - Dimensionality reduction: Try SVD but also Non-negative Matrix Factorization
     - Collaborative filtering: try also item-based
     - Handle case when the patient has no trials available for a given condition
+    - Hybrid: check https://www.quora.com/How-can-I-combine-the-recommendation-results-from-User-based-collaborative-and-item-based-and-return-the-best-of-these-two-using-Apache-Mahout
 
-    Mtrics for eval:
+    Eval:
+    - Do a ablation study removing different recommenders
     - RMSE
     - MAE
     - NDCG (check: https://benjlindsay.com/posts/comparing-collaborative-filtering-methods#algorithm-comparisons)
@@ -28,7 +30,7 @@ if __name__ == '__main__':
     #parser.add_argument('condition_id', type=str, help='id of the condition of the patient for which to compute the recommendation.')
     
     #TODO: remove
-    dataset_path = './data/final'
+    dataset_path = './data/generated'
     tests = pd.read_csv(f'{dataset_path}/test.csv', sep='\t')
     patient_id, condition_id = tests.iloc[2]
     parser.set_defaults(dataset_path=f'{dataset_path}/dataset.json')
@@ -46,6 +48,7 @@ if __name__ == '__main__':
     recommender = HybridRecommender([
         CollaborativeFilteringRecommender(similarity='levenshtein', n_neighbors=50),
         CollaborativeFilteringRecommender(similarity='cosine', n_neighbors=50),
+        #LatentFactorRecommender(algorithm='svd')
     ])
 
     print('Fit recommender on dataset...')

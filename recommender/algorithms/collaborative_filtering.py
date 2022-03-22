@@ -21,7 +21,7 @@ class CollaborativeFilteringRecommender(BaseRecommender):
         # Compute the utility matrix, using as value the 'successful' column. The result is a NxM utility matrix, where:
         # - N is the number of conditions of each patient (i.e. the "users")
         # - M is the number of available therapies (i.e. the "items")
-        self.utility = self._get_trials_vectors(dataset.p_trials, dataset.therapies)
+        self.utility = self._get_utility_matrix(dataset.p_trials, dataset.therapies)
         # Compute global baseline estimates
         global_avg_rating = np.nanmean(self.utility)
         users_rating_deviation = global_avg_rating - self.utility.mean(axis=1, skipna=True).values
@@ -32,7 +32,6 @@ class CollaborativeFilteringRecommender(BaseRecommender):
     def _get_top_similar_k(self, condition_id: str):
         """Compute the k most similar conditions to the given one."""
         # Get trials of condition_id
-        # TODO: distance based n k-grams
         target_features = self.utility[self.utility.index == condition_id]
         other_features = self.utility[self.utility.index != condition_id]
         if self.similarity == 'levenshtein':
@@ -55,11 +54,12 @@ class CollaborativeFilteringRecommender(BaseRecommender):
         weights = np.tile(top_k_similarities.values.reshape(-1, 1), len(self.dataset.therapies))
         weights = pd.DataFrame(weights, index=top_k_ratings.index, columns=self.dataset.therapies.index)
         weights[top_k_ratings.isna()] = 0 # Set weights of empty ratings to 0
-        # TODO: use global baseline estimates
-        # Compute weighted average of weights
-        weighted_ratings = weights * (top_k_ratings)  # Multiply every rating by the similarity score
+        # Compute weighted average of rating (with global baseline estimate)
+        weighted_ratings = weights * (top_k_ratings - self.global_baseline.loc[top_k_ratings.index])  # Multiply every rating by the similarity score
         pred_ratings = weighted_ratings.sum(axis='index') / weights.sum(axis='index')
+        pred_ratings = pred_ratings + self.global_baseline.loc[condition_id]
         pred_ratings = pred_ratings.fillna(0)
+        pred_ratings = pred_ratings.clip(0, 100)
         return pred_ratings
 
     def predict(self, patient_id: str, condition_id: str):

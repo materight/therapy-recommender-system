@@ -1,8 +1,10 @@
 
 from .hybrid import HybridRecommender
 from .collaborative_filtering import CollaborativeFilteringRecommender
+from .latent_factor import LatentFactorRecommender
 
 __all__ = [
-    CollaborativeFilteringRecommender, 
-    HybridRecommender
+    HybridRecommender,
+    CollaborativeFilteringRecommender,
+    LatentFactorRecommender,
 ]
