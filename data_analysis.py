@@ -46,6 +46,12 @@ class Plotter():
             trials_per_condition.plot.hist(alpha=0.5, bins=range(trials_per_condition.max()+1), ax=ax)
             ax.set_xlabel('Number of trials per condition')
             ax.set_ylabel('Frequency')
+        # Distribution of success score
+        with self.plot('distributions/success_scores') as (_, ax):
+            trials_success = self.dataset.p_trials['successful']
+            trials_success.plot.hist(alpha=0.5, bins=100, ax=ax)
+            ax.set_xlabel('Success score of trials')
+            ax.set_ylabel('Frequency')
 
 if __name__ == '__main__':
     # Script arguments
@@ -53,7 +59,7 @@ if __name__ == '__main__':
     # parser.add_argument('dataset_path', type=str, help='path to the dataset file.', default='./data/generated/dataset.json')
 
     #TODO: remove
-    dataset_path = './data/generated'
+    dataset_path = './data/final'
     parser.set_defaults(dataset_path=f'{dataset_path}/dataset.json')
     #TODO: remove
 
