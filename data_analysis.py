@@ -25,7 +25,7 @@ class Plotter():
     def plt_distributions(self):
         """Plot various data distributions."""
         # Condition status of patients
-        with self.plot('distributions/conditions_per_patients') as (_, ax):
+        with self.plot('distributions/conditions_per_patient') as (_, ax):
             p_cond = self.dataset.p_conditions['cured'].isna()
             conds_per_patient = p_cond.groupby(['patient', p_cond]).count().rename('count')
             conds_per_patient = conds_per_patient.reset_index().pivot(index='patient', columns='cured', values='count')
@@ -59,7 +59,7 @@ if __name__ == '__main__':
     # parser.add_argument('dataset_path', type=str, help='path to the dataset file.', default='./data/generated/dataset.json')
 
     #TODO: remove
-    dataset_path = './data/final'
+    dataset_path = './data/general'
     parser.set_defaults(dataset_path=f'{dataset_path}/dataset.json')
     #TODO: remove
 
