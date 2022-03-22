@@ -13,6 +13,7 @@ if __name__ == '__main__':
                      condition profile.
     - Dimensionality reduction: Try SVD but also Non-negative Matrix Factorization
     - Collaborative filtering: try also item-based
+    - Handle case when the patient has no trials available for a given condition
 
     Mtrics for eval:
     - RMSE
@@ -27,9 +28,9 @@ if __name__ == '__main__':
     #parser.add_argument('condition_id', type=str, help='id of the condition of the patient for which to compute the recommendation.')
     
     #TODO: remove
-    dataset_path = './data/generated'
+    dataset_path = './data/final'
     tests = pd.read_csv(f'{dataset_path}/test.csv', sep='\t')
-    patient_id, condition_id = tests.iloc[0]
+    patient_id, condition_id = tests.iloc[2]
     parser.set_defaults(dataset_path=f'{dataset_path}/dataset.json')
     parser.set_defaults(patient_id=str(patient_id))
     parser.set_defaults(condition_id=str(condition_id))
