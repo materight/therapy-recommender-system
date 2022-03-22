@@ -51,8 +51,8 @@ class CollaborativeFilteringRecommender(BaseRecommender):
         """Predict the therapy ratings using the given k most similar conditions."""
         top_k_ratings = self.utility.loc[top_k_similarities.index] # Get the ratings of the top k similar conditions
         # Generate matrix of weigths to be applied. Weights are the similairty scores
-        weights = np.tile(top_k_similarities.values.reshape(-1, 1), len(self.dataset.therapies))
-        weights = pd.DataFrame(weights, index=top_k_ratings.index, columns=self.dataset.therapies.index)
+        weights = np.tile(top_k_similarities.values.reshape(-1, 1), len(top_k_ratings.columns))
+        weights = pd.DataFrame(weights, index=top_k_ratings.index, columns=top_k_ratings.columns)
         weights[top_k_ratings.isna()] = 0 # Set weights of empty ratings to 0
         # Compute weighted average of rating (with global baseline estimate)
         weighted_ratings = weights * (top_k_ratings - self.global_baseline.loc[top_k_ratings.index])  # Multiply every rating by the similarity score
