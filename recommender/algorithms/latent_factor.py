@@ -14,18 +14,21 @@ class LatentFactorRecommender(BaseRecommender):
         super().__init__()
         self.algorithm = algorithm
 
+
+    def init_state(self, utility_matrix, **kwargs):
+        self.utility_matrix = utility_matrix
+
+
     def fit(self, dataset):
-        # Compute utility matrix
-        self.utility = self._get_utility_matrix(dataset.p_trials, dataset.therapies)
         # Compute normalization factor as average rating of users
-        avg_rating = np.nanmean(self.utility, axis=1, keepdims=True)
+        avg_rating = np.nanmean(self.utility_matrix, axis=1, keepdims=True)
         # Use SVD decomposition to compute the latent factors
-        matrix = self.utility.values - avg_rating
+        matrix = self.utility_matrix.values - avg_rating
         matrix[np.isnan(matrix)] = 0 # Fill nan values with average rating
         # TODO: use funk_svd
         u, s, v = np.linalg.svd(matrix, full_matrices=False)
         self.predictions = (u * s) @ v + avg_rating
-        self.predictions = pd.DataFrame(self.predictions, index=self.utility.index, columns=self.utility.columns)
+        self.predictions = pd.DataFrame(self.predictions, index=self.utility_matrix.index, columns=self.utility_matrix.columns)
 
     def predict(self, patient_id: str, condition_id: str):
         pred_ratings = self.predictions.loc[condition_id]

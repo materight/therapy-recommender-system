@@ -1,6 +1,7 @@
-from typing import List
-from tqdm import tqdm
+import numpy as np
 import pandas as pd
+from tqdm import tqdm
+from typing import List
 
 from .utils import BaseRecommender 
 
@@ -15,8 +16,15 @@ class HybridRecommender(BaseRecommender):
         super().__init__()
         self.recommenders = recommenders
 
+
     def fit(self, dataset):
+        # Compute utility matrix (common for all recommenders)
+        utility_matrix = self._get_utility_matrix(dataset.p_trials, dataset.therapies)
+        # Compute global baseline estimates
+        global_baseline = self._get_baseline_estimates(utility_matrix)
+        # Fit recommenders on dataset
         for recommender in tqdm(self.recommenders):
+            recommender.init_state(utility_matrix=utility_matrix, global_baseline=global_baseline)
             recommender.fit(dataset)
 
     def predict(self, patient_id: str, condition_id: str):
@@ -26,5 +34,6 @@ class HybridRecommender(BaseRecommender):
             result = recommender.predict(patient_id, condition_id)
             results.append(result)
         # Combine predictions into single result
-        predictions = pd.concat(results, axis=1).mean(axis=1)
+        predictions = pd.concat(results, axis=1)
+        predictions = predictions.mean(axis=1)
         return predictions

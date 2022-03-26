@@ -1,3 +1,4 @@
+from abc import abstractmethod
 import numpy as np
 import pandas as pd
 import editdistance
@@ -8,14 +9,18 @@ from recommender.dataset import Dataset
 class BaseRecommender:
     """Base class for all recommender algorithms."""
 
+    def init_state(self, **kwargs):
+        """Initialize the recommender state with additional data if needed."""
+        pass
+
+    @abstractmethod
     def fit(self, dataset: Dataset):
         """Fit the recommender algorithm to the given data."""
-        raise NotImplemented
 
+    @abstractmethod
     def predict(self, patient_id: str, condition_id: str):
         """Recommend a list of k therapies with a predicted success rate."""
-        raise NotImplemented
-    
+
     @staticmethod
     def _get_trials(p_trials, condition_ids: List[str]):
         """Return the trials of the given conditions."""
@@ -23,17 +28,33 @@ class BaseRecommender:
 
     @staticmethod
     def _get_utility_matrix(p_trials: pd.DataFrame, therapies: pd.DataFrame):
-        """Convert the given conditions in p_trials to a feature vector, where 
-           columns=therapies and values=successful score."""
-        features = p_trials.pivot_table(index='condition', columns='therapy', values='successful')
+        """Compute the utility matrix, using as value the 'successful' column. The result is a NxM utility matrix, where:
+            - N is the number of conditions of each patient (i.e. the "users")
+            - M is the number of available therapies (i.e. the "items")"""
+        features = p_trials.pivot_table(index='condition', columns='therapy', values='successful', aggfunc='mean')
         features = features.reindex(columns=therapies.index)
         return features
+
+    @staticmethod
+    def _get_baseline_estimates(utility_matrix: pd.DataFrame):
+        """Compute the baseline estimates on the given utility matrix."""
+        global_avg_rating = np.nanmean(utility_matrix)
+        users_rating_deviation = global_avg_rating - utility_matrix.mean(axis=1, skipna=True).values
+        items_rating_deviation = global_avg_rating - utility_matrix.mean(axis=0, skipna=True).values
+        global_baseline = global_avg_rating + (users_rating_deviation.reshape(-1,1) + items_rating_deviation.reshape(1,-1))
+        global_baseline = pd.DataFrame(global_baseline, index=utility_matrix.index, columns=utility_matrix.columns)
+        return global_baseline
 
     @staticmethod
     def _get_trials_sequences(p_trials: pd.DataFrame):
         """Convert the given conditions in p_trials to a list of trials, ordered by start time."""
         sequences = p_trials.sort_values('start').groupby(['condition'], observed=True)['therapy'].apply(list)
         return sequences
+
+    @staticmethod
+    def _build_patients_profiles(patients: pd.DataFrame):
+        patients = patients.drop(columns=['name', 'email', 'birthdate'], errors='ignore')
+        return patients
 
     @staticmethod
     def _jaccard_similarity(target_item: pd.DataFrame, other_items: pd.DataFrame):
@@ -48,7 +69,7 @@ class BaseRecommender:
         return similarities
 
     @staticmethod
-    def _cosine_similarity(target_item: pd.DataFrame, other_items: pd.DataFrame):
+    def _pearson_correlation(target_item: pd.DataFrame, other_items: pd.DataFrame):
         """Compute the centered cosine similarity (pearson correlation) between the target item and all the other items."""
         # TODO: check NaN values handling
         assert target_item.shape[0] == 1, 'target_item must contain 1 element'

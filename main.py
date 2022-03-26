@@ -1,7 +1,7 @@
 import argparse
 import pandas as pd
 
-from recommender.algorithms import (HybridRecommender, CollaborativeFilteringRecommender, LatentFactorRecommender)
+from recommender.algorithms import (HybridRecommender, NearestNeighborsRecommender, CollaborativeFilteringRecommender, LatentFactorRecommender)
 from recommender.dataset import Dataset
 
 if __name__ == '__main__':
@@ -45,9 +45,10 @@ if __name__ == '__main__':
 
     print('Init recommender...')
     recommender = HybridRecommender([
-        #CollaborativeFilteringRecommender(approach='user-user', similarity='levenshtein', n_neighbors=50),
-        #CollaborativeFilteringRecommender(approach='user-user', similarity='cosine', n_neighbors=50),
-        CollaborativeFilteringRecommender(approach='item-item', similarity='cosine', n_neighbors=50),
+        #NearestNeighborsRecommender(method='patient-profile', metric='jaccard', n_neighbors=50), # For patients without registered conditions
+        #NearestNeighborsRecommender(method='trials-sequence', metric='levenshtein', n_neighbors=50),
+        #CollaborativeFilteringRecommender(method='user-user', similarity='pearson', n_neighbors=50),
+        CollaborativeFilteringRecommender(method='item-item', similarity='pearson', n_neighbors=50),
         #LatentFactorRecommender(algorithm='svd')
     ])
 
