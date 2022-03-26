@@ -2,7 +2,8 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
-from .nearest_neighbors import NearestNeighborsRecommender
+from recommender.dataset import Dataset
+from recommender.algorithms import NearestNeighborsRecommender
 
 class CollaborativeFilteringRecommender(NearestNeighborsRecommender):
     def __init__(self, method: str, similarity: str, n_neighbors: int):
@@ -19,14 +20,14 @@ class CollaborativeFilteringRecommender(NearestNeighborsRecommender):
         super().__init__(method, similarity, n_neighbors)
 
 
-    def init_state(self, utility_matrix, global_baseline, **kwargs):
+    def init_state(self, utility_matrix: pd.DataFrame, global_baseline: pd.DataFrame, **kwargs):
         super().init_state(utility_matrix, global_baseline, **kwargs)
         if self.method == 'item-item':
             self.utility_matrix = self.utility_matrix.T
             self.global_baseline = self.global_baseline.T
 
 
-    def fit(self, dataset):
+    def fit(self, dataset: Dataset):
         self.dataset = dataset
 
 

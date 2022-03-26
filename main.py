@@ -49,7 +49,7 @@ if __name__ == '__main__':
         #NearestNeighborsRecommender(method='trials-sequence', metric='levenshtein', n_neighbors=50),
         #CollaborativeFilteringRecommender(method='user-user', similarity='pearson', n_neighbors=50),
         CollaborativeFilteringRecommender(method='item-item', similarity='pearson', n_neighbors=50),
-        #LatentFactorRecommender(algorithm='svd')
+        LatentFactorRecommender(algorithm='svd')
     ])
 
     print('Fit recommender on dataset...')

@@ -3,7 +3,8 @@ import pandas as pd
 from tqdm import tqdm
 from typing import List
 
-from .utils import BaseRecommender 
+from recommender.dataset import Dataset
+from recommender.algorithms.utils import BaseRecommender
 
 class HybridRecommender(BaseRecommender):
     def __init__(self, recommenders: List[BaseRecommender]):
@@ -17,7 +18,7 @@ class HybridRecommender(BaseRecommender):
         self.recommenders = recommenders
 
 
-    def fit(self, dataset):
+    def fit(self, dataset: Dataset):
         # Compute utility matrix (common for all recommenders)
         utility_matrix = self._get_utility_matrix(dataset.p_trials, dataset.therapies)
         # Compute global baseline estimates

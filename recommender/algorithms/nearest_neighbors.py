@@ -1,8 +1,8 @@
 import numpy as np
 import pandas as pd
 
-from .utils import BaseRecommender
-
+from recommender.dataset import Dataset
+from recommender.algorithms.utils import BaseRecommender
 class NearestNeighborsRecommender(BaseRecommender):
     def __init__(self, method: str, similarity: str, n_neighbors: int):
         """
@@ -24,12 +24,12 @@ class NearestNeighborsRecommender(BaseRecommender):
         self.features = None
 
 
-    def init_state(self, utility_matrix, global_baseline, **kwargs):
+    def init_state(self, utility_matrix: pd.DataFrame, global_baseline: pd.DataFrame, **kwargs):
         self.utility_matrix = utility_matrix
         self.global_baseline = global_baseline
 
 
-    def fit(self, dataset):
+    def fit(self, dataset: Dataset):
         self.dataset = dataset
         # Compute features to be used to find similar objects
         if self.method == 'patient-profile':
