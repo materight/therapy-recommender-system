@@ -1,5 +1,6 @@
 from typing import List
 from tqdm import tqdm
+import pandas as pd
 
 from .utils import BaseRecommender 
 
@@ -23,6 +24,7 @@ class HybridRecommender(BaseRecommender):
         results = []
         for recommender in tqdm(self.recommenders):
             result = recommender.predict(patient_id, condition_id)
-            result = result.sort_values(ascending=False)
             results.append(result)
-        return results[0]
+        # Combine predictions into single result
+        predictions = pd.concat(results, axis=1).mean(axis=1)
+        return predictions

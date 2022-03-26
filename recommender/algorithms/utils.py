@@ -22,11 +22,10 @@ class BaseRecommender:
         return p_trials[p_trials.condition.isin(condition_ids)]
 
     @staticmethod
-    def _get_utility_matrix(p_trials: pd.DataFrame, therapies: pd.DataFrame,
-                            index: str = 'condition', column: str = 'therapy'):
+    def _get_utility_matrix(p_trials: pd.DataFrame, therapies: pd.DataFrame):
         """Convert the given conditions in p_trials to a feature vector, where 
            columns=therapies and values=successful score."""
-        features = p_trials.pivot_table(index=index, columns=column, values='successful')
+        features = p_trials.pivot_table(index='condition', columns='therapy', values='successful')
         features = features.reindex(columns=therapies.index)
         return features
 
