@@ -45,11 +45,11 @@ if __name__ == '__main__':
 
     print('Init recommender...')
     recommender = HybridRecommender([
-        #NearestNeighborsRecommender(method='patient-profile', metric='jaccard', n_neighbors=50), # For patients without registered conditions
-        #NearestNeighborsRecommender(method='trials-sequence', metric='levenshtein', n_neighbors=50),
-        #CollaborativeFilteringRecommender(method='user-user', similarity='pearson', n_neighbors=50),
-        CollaborativeFilteringRecommender(method='item-item', similarity='pearson', n_neighbors=50),
-        LatentFactorRecommender(algorithm='svd')
+        NearestNeighborsRecommender(method='patient-profile', similarity='hamming', n_neighbors=50), # For patients without registered conditions
+        NearestNeighborsRecommender(method='trials-sequence', similarity='levenshtein', n_neighbors=50),
+        CollaborativeFilteringRecommender(method='user-user', similarity='pearson', n_neighbors=50),
+        #CollaborativeFilteringRecommender(method='item-item', similarity='pearson', n_neighbors=50),
+        #LatentFactorRecommender(method='svd')
     ])
 
     print('Fit recommender on dataset...')

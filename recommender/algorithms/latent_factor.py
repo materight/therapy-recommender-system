@@ -5,15 +5,15 @@ from recommender.dataset import Dataset
 from recommender.algorithms.utils import BaseRecommender
 
 class LatentFactorRecommender(BaseRecommender):
-    def __init__(self, algorithm: str):
+    def __init__(self, method: str):
         """
         Collaborative filtering recommender.
 
         Args:
-            algorithm (str): Which algorithm to use. Supported values: 'funk_svd'.
+            method (str): Which algorithm to use. Supported values: 'funk_svd'.
         """
         super().__init__()
-        self.algorithm = algorithm
+        self.method = method
 
 
     def init_state(self, utility_matrix: pd.DataFrame, **kwargs):

@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from sklearn import neighbors
 
 from recommender.dataset import Dataset
 from recommender.algorithms.utils import BaseRecommender
@@ -42,10 +43,15 @@ class NearestNeighborsRecommender(BaseRecommender):
 
     def _get_features(self, patient_id: str, condition_id: str):
         """Get the features according to the given features type."""
-        if self.method in ['patient-profile']:
-            target_features = self.features.loc[self.features.index == patient_id]
-            others_features = self.features.loc[ self.features.index != patient_id]
-        elif self.method in ['trials-sequence']:
+        if self.method == 'patient-profile':
+            # Remap patients profiles to conditions indexes, using only conditions of the same type as the target condition
+            target_condition_kind = self.dataset.p_conditions[self.dataset.p_conditions.index.get_level_values('id') == condition_id].kind.iloc[0]
+            relevant_conditions = self.dataset.p_conditions[self.dataset.p_conditions.kind == target_condition_kind].reset_index()
+            final_features = relevant_conditions[['id', 'patient']].merge(self.features, left_on='patient', right_on='id', how='left').set_index('id')
+            # Re-map patients features to conditions indexes
+            target_features = final_features.loc[final_features.index == condition_id]
+            others_features = final_features.loc[final_features.index != condition_id]
+        elif self.method == 'trials-sequence':
             # Compute Jaccard similarity between the given condition and all the others to reduce the number of conditons to consider when computing the Levenshtein distance
             utility_mask = self.utility_matrix.index == condition_id
             jaccard_similarities = self._jaccard_similarity(self.utility_matrix[utility_mask], self.utility_matrix[~utility_mask])
@@ -58,10 +64,12 @@ class NearestNeighborsRecommender(BaseRecommender):
         return target_features, others_features
 
 
-    def _get_neighbors(self,  target_features: pd.DataFrame, other_features: pd.DataFrame):
+    def _get_neighbors(self, target_features: pd.DataFrame, other_features: pd.DataFrame):
         """Compute the k most similar objects to the target."""
         if self.similarity == 'jaccard':
             similarities = self._jaccard_similarity(target_features, other_features)
+        elif self.similarity == 'hamming':
+            similarities = self._hamming_similarity(target_features, other_features)
         elif self.similarity == 'pearson':
             similarities = self._pearson_correlation(target_features, other_features)
         elif self.similarity == 'levenshtein' and self.method == 'trials-sequence':
@@ -69,8 +77,9 @@ class NearestNeighborsRecommender(BaseRecommender):
         else:
             raise ValueError(f'Similarity {self.similarity} with {self.method} method is not supported.')
         similarities = similarities[similarities > 0] # Use only items with positive similarities
-        top_k = similarities.nlargest(self.n_neighbors)
-        return top_k
+        similarities = similarities.loc[similarities.index.intersection(self.utility_matrix.index)] # Use only items that are present in the utility matrix (i.e. that have been rated)
+        neighbors_similarities = similarities.nlargest(self.n_neighbors)
+        return neighbors_similarities
 
 
     def _predict_ratings(self, object_id: str, neighbors_similarities: pd.DataFrame):

@@ -53,7 +53,9 @@ class BaseRecommender:
 
     @staticmethod
     def _build_patients_profiles(patients: pd.DataFrame):
-        patients = patients.drop(columns=['name', 'email', 'birthdate'], errors='ignore')
+        patients = patients.copy().drop(columns=['name', 'email', 'birthdate'], errors='ignore')
+        if 'age' in patients.columns: # Convert age to category
+            patients['age'] = pd.cut(patients['age'], bins=[0, 2, 18, 30, 50, 70, np.inf], labels=['<2', '2-18', '18-30', '30-50', '50-70', '>70'])
         return patients
 
     @staticmethod
@@ -69,9 +71,16 @@ class BaseRecommender:
         return similarities
 
     @staticmethod
+    def _hamming_similarity(target_item: pd.DataFrame, other_items: pd.DataFrame):
+        """Compute the normalized hamming similarity between the target item and all the other items."""
+        assert target_item.shape[0] == 1, 'target_item must contain 1 element'
+        intersection = (target_item.iloc[0] == other_items).sum(axis=1)
+        similarities = intersection / target_item.shape[1]
+        return similarities
+
+    @staticmethod
     def _pearson_correlation(target_item: pd.DataFrame, other_items: pd.DataFrame):
         """Compute the centered cosine similarity (pearson correlation) between the target item and all the other items."""
-        # TODO: check NaN values handling
         assert target_item.shape[0] == 1, 'target_item must contain 1 element'
         other_index = other_items.index
         target_item, other_items = target_item.values, other_items.values

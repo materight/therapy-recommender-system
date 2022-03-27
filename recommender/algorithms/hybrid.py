@@ -28,6 +28,7 @@ class HybridRecommender(BaseRecommender):
             recommender.init_state(utility_matrix=utility_matrix, global_baseline=global_baseline)
             recommender.fit(dataset)
 
+
     def predict(self, patient_id: str, condition_id: str):
         # TODO: rank aggregation (check: https://people.orie.cornell.edu/dpw/talks/RankAggDec2012.pdf)
         results = []
