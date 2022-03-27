@@ -8,33 +8,55 @@ from recommender.algorithms.utils import BaseRecommender
 
 
 @njit
-def _svd(ratings, rows, cols, matrix_shape, latent_size, epochs, lr, reg):
-    """Funk SVD algorithm. Source: https://github.com/NicolasHug/Surprise/blob/46b9914995e6c8c7d227b46f2eaeef2d4600580f/surprise/prediction_algorithms/matrix_factorization.pyx#L159"""
+def _svd(ratings, indptr, indices, n_users, n_items, latent_size, epochs, lr, reg, with_implicit_ratings):
+    """Funk SVD algoritm using SGD optimization. Source: https://github.com/NicolasHug/Surprise/blob/46b9914995e6c8c7d227b46f2eaeef2d4600580f/surprise/prediction_algorithms/matrix_factorization.pyx#L159"""
     # Initialize matrices
     np.random.seed(0)
     global_mean = ratings.mean()
-    bu = np.zeros(matrix_shape[0], np.double) # User bias
-    bi = np.zeros(matrix_shape[1], np.double) # Item bias
-    P = np.random.normal(0, 0.1, (matrix_shape[0], latent_size))
-    Q = np.random.normal(0, 0.1, (matrix_shape[1], latent_size))
+    bu = np.zeros(n_users, np.double) # User bias
+    bi = np.zeros(n_items, np.double) # Item bias
+    P = np.random.normal(0, 0.1, (n_users, latent_size))
+    Q = np.random.normal(0, 0.1, (n_items, latent_size))
+    Y = np.random.normal(0, 0.1, (n_items, latent_size)) # Item implicit factors
     # Run optimization
     for _ in range(epochs):
-        for r, u, i in zip(ratings, rows, cols):
-            # Compute current error
-            dot_prod = np.dot(P[u], Q[i])
-            err = r - (global_mean + bu[u] + bi[i] + dot_prod) # Compute prediction with bias terms
-            # Update biases
-            bu[u] += lr * (err - reg * bu[u])
-            bi[i] += lr * (err - reg * bi[i])
-            # Update factors
-            for f in range(latent_size):
-                puf = P[u, f]
-                qif = Q[i, f]
-                P[u, f] += lr * (err * qif - reg * puf)
-                Q[i, f] += lr * (err * puf - reg * qif)
-    # Compute final predictions as dot product
+        for u in range(len(indptr)-1): # For each user
+            s, e = indptr[u], indptr[u+1] # Get index pointers for current row
+            if with_implicit_ratings:
+                Iu = indices[s:e] # Items rated by u
+                sqrt_Iu = np.sqrt(len(Iu))
+            # Iterate over each rating value in each column
+            for r, i in zip(ratings[s:e], indices[s:e]):
+                # Compute implicit feedback of current user if needed, oterwise set to 0
+                impl_fdb = np.zeros(latent_size, np.double)
+                if with_implicit_ratings:
+                    for j in Iu:
+                        impl_fdb += Y[j] / sqrt_Iu
+                # Compute current error
+                dot = np.dot(P[u] + impl_fdb, Q[i])
+                err = r - (global_mean + bu[u] + bi[i] + dot) # Compute prediction error
+                # Update biases
+                bu[u] += lr * (err - reg * bu[u])
+                bi[i] += lr * (err - reg * bi[i])
+                # Update factors
+                for f in range(latent_size):
+                    puf, qif = P[u, f], Q[i, f]
+                    P[u, f] += lr * (err * qif - reg * puf)
+                    Q[i, f] += lr * (err * (puf + impl_fdb[f]) - reg * qif)
+                    if with_implicit_ratings:
+                        for j in Iu:
+                            Y[j, f] += lr * (err * qif / sqrt_Iu - reg * Y[j, f])
+    # Compute final implicit feedbacks of users
+    F = np.zeros((n_users, latent_size), np.double)
+    if with_implicit_ratings:
+        for u in range(len(indptr)-1):
+            Iu = indices[indptr[u]:indptr[u+1]]
+            sqrt_Iu = np.sqrt(len(Iu))
+            for j in Iu:
+                F[u] += Y[j] / sqrt_Iu
+    # Compute final predictions with dot product and baselines
     baseline_estimate = global_mean + (bu.reshape(-1,1) + bi.reshape(1,-1))
-    predictions = (P @ Q.T) + baseline_estimate
+    predictions = baseline_estimate + ((P + F) @ Q.T)
     return predictions
 
 
@@ -60,8 +82,11 @@ class LatentFactorRecommender(BaseRecommender):
 
     def fit(self, dataset: Dataset):
         if self.method == 'svd':
-            R = self.utility_matrix.astype(pd.SparseDtype(float, np.nan)).sparse.to_coo() # Convert to scipy sparse matrix for easy iteration
-            predictions = _svd(R.data, R.row, R.col, R.shape, self.latent_size, self.epochs, lr=0.005, reg=0.02)
+            R = self.utility_matrix.astype(pd.SparseDtype(float, np.nan)).sparse.to_coo().tocsr() # Convert to scipy sparse matrix for easy iteration
+            predictions = _svd(R.data, R.indptr, R.indices, R.shape[0], R.shape[1], self.latent_size, self.epochs, lr=0.005, reg=0.02, with_implicit_ratings=False)
+        elif self.method == 'svd++':
+            R = self.utility_matrix.astype(pd.SparseDtype(float, np.nan)).sparse.to_coo().tocsr() # Convert to scipy sparse matrix for easy iteration
+            predictions = _svd(R.data, R.indptr, R.indices, R.shape[0], R.shape[1], self.latent_size, self.epochs, lr=0.005, reg=0.02, with_implicit_ratings=True)
         else:
             raise ValueError(f'Unknown method: {self.method}')
         self.predictions = pd.DataFrame(predictions, index=self.utility_matrix.index, columns=self.utility_matrix.columns)
