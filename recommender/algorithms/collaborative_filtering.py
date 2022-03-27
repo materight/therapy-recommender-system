@@ -48,7 +48,7 @@ class CollaborativeFilteringRecommender(NearestNeighborsRecommender):
     def _predict_item_item(self, condition_id: str):
         # Predict ratings item by item and aggregate results for the given condition
         pred_ratings = pd.Series(index=self.utility_matrix.index)
-        for therapy_id in tqdm(self.utility_matrix.index):
+        for therapy_id in tqdm(self.utility_matrix.index, position=1):
             target_features, other_features = self._get_features(therapy_id) # Compute features
             neighbors_similarities = self._get_neighbors(target_features, other_features) # Get neighbors with similarity values
             therapy_pred_ratings = self._predict_ratings(therapy_id, neighbors_similarities) # Compute ratings predictions for the current therapy

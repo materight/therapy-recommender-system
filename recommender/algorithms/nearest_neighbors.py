@@ -33,7 +33,7 @@ class NearestNeighborsRecommender(BaseRecommender):
     def fit(self, dataset: Dataset):
         self.dataset = dataset
         # Compute features to be used to find similar objects
-        if self.method == 'patient-profile':
+        if self.method == 'patient-profile': # Demographic approach
             self.features = self._build_patients_profiles(self.dataset.patients)
         elif self.method == 'trials-sequence':
             self.features = self._get_trials_sequences(self.dataset.p_trials)

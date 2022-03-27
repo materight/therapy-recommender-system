@@ -39,8 +39,8 @@ class BaseRecommender:
     def _get_baseline_estimates(utility_matrix: pd.DataFrame):
         """Compute the baseline estimates on the given utility matrix."""
         global_avg_rating = np.nanmean(utility_matrix)
-        users_rating_deviation = global_avg_rating - utility_matrix.mean(axis=1, skipna=True).values
-        items_rating_deviation = global_avg_rating - utility_matrix.mean(axis=0, skipna=True).values
+        users_rating_deviation = utility_matrix.mean(axis=1, skipna=True).values - global_avg_rating
+        items_rating_deviation = utility_matrix.mean(axis=0, skipna=True).values - global_avg_rating
         global_baseline = global_avg_rating + (users_rating_deviation.reshape(-1,1) + items_rating_deviation.reshape(1,-1))
         global_baseline = pd.DataFrame(global_baseline, index=utility_matrix.index, columns=utility_matrix.columns)
         return global_baseline

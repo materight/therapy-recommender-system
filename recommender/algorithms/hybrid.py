@@ -24,7 +24,9 @@ class HybridRecommender(BaseRecommender):
         # Compute global baseline estimates
         global_baseline = self._get_baseline_estimates(utility_matrix)
         # Fit recommenders on dataset
-        for recommender in tqdm(self.recommenders):
+        pbar = tqdm(self.recommenders)
+        for recommender in pbar:
+            pbar.set_description(recommender.method)
             recommender.init_state(utility_matrix=utility_matrix, global_baseline=global_baseline)
             recommender.fit(dataset)
 
@@ -32,7 +34,9 @@ class HybridRecommender(BaseRecommender):
     def predict(self, patient_id: str, condition_id: str):
         # TODO: rank aggregation (check: https://people.orie.cornell.edu/dpw/talks/RankAggDec2012.pdf)
         results = []
-        for recommender in tqdm(self.recommenders):
+        pbar = tqdm(self.recommenders)
+        for recommender in pbar:
+            pbar.set_description(recommender.method)
             result = recommender.predict(patient_id, condition_id)
             results.append(result)
         # Combine predictions into single result
