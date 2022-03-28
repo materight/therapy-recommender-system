@@ -90,6 +90,7 @@ class LatentFactorRecommender(BaseRecommender):
             predictions = _svd(R.data, R.indptr, R.indices, R.shape[0], R.shape[1], self.latent_size, self.epochs, lr=self.lr, reg=self.reg, with_implicit_ratings=True)
         else:
             raise ValueError(f'Unknown method: {self.method}')
+        predictions = predictions.clip(0, 100)
         self.predictions = pd.DataFrame(predictions, index=self.utility_matrix.index, columns=self.utility_matrix.columns)
 
 
