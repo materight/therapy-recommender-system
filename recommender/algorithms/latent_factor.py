@@ -57,18 +57,23 @@ def _svd(ratings, indptr, indices, n_users, n_items, latent_size, epochs, lr, re
 
 
 class LatentFactorRecommender(BaseRecommender):
-    def __init__(self, method: str, latent_size: int = 100, epochs: int = 20):
+    def __init__(self, method: str, latent_size: int = 100, epochs: int = 20, lr: float = 0.005, reg: float = 0.02):
         """
         Collaborative filtering recommender.
 
         Args:
-            method (str): Which algorithm to use. Supported values: 'svd'.
+            method (str): Which algorithm to use. Supported values: 'svd', 'svd++'.
             latent_size (int): Number of latent factors to compute.
+            epochs (int): Number of iterations to run.
+            lr (float): Learning rate.
+            reg (float): Regularization parameter.
         """
         super().__init__()
         self.method = method
         self.latent_size = latent_size
         self.epochs = epochs
+        self.lr = lr
+        self.reg = reg
         self.rng = np.random.RandomState(0)
 
 
@@ -79,10 +84,10 @@ class LatentFactorRecommender(BaseRecommender):
     def fit(self, dataset: Dataset):
         if self.method == 'svd':
             R = self.utility_matrix.astype(pd.SparseDtype(float, np.nan)).sparse.to_coo().tocsr() # Convert to scipy sparse matrix for easy iteration
-            predictions = _svd(R.data, R.indptr, R.indices, R.shape[0], R.shape[1], self.latent_size, self.epochs, lr=0.005, reg=0.02, with_implicit_ratings=False)
+            predictions = _svd(R.data, R.indptr, R.indices, R.shape[0], R.shape[1], self.latent_size, self.epochs, lr=self.lr, reg=self.reg, with_implicit_ratings=False)
         elif self.method == 'svd++':
             R = self.utility_matrix.astype(pd.SparseDtype(float, np.nan)).sparse.to_coo().tocsr() # Convert to scipy sparse matrix for easy iteration
-            predictions = _svd(R.data, R.indptr, R.indices, R.shape[0], R.shape[1], self.latent_size, self.epochs, lr=0.005, reg=0.02, with_implicit_ratings=True)
+            predictions = _svd(R.data, R.indptr, R.indices, R.shape[0], R.shape[1], self.latent_size, self.epochs, lr=self.lr, reg=self.reg, with_implicit_ratings=True)
         else:
             raise ValueError(f'Unknown method: {self.method}')
         self.predictions = pd.DataFrame(predictions, index=self.utility_matrix.index, columns=self.utility_matrix.columns)
