@@ -27,12 +27,13 @@ class BaseRecommender:
         return p_trials[p_trials.condition.isin(condition_ids)]
 
     @staticmethod
-    def _get_utility_matrix(p_trials: pd.DataFrame, therapies: pd.DataFrame):
+    def _get_utility_matrix(p_trials: pd.DataFrame, p_conditions: pd.DataFrame, therapies: pd.DataFrame):
         """Compute the utility matrix, using as value the 'successful' column. The result is a NxM utility matrix, where:
             - N is the number of conditions of each patient (i.e. the "users")
             - M is the number of available therapies (i.e. the "items")"""
         features = p_trials.pivot_table(index='condition', columns='therapy', values='successful', aggfunc='mean')
         features = features.reindex(columns=therapies.index)
+        features = features.reindex(index=p_conditions.index.get_level_values('id')) # TODO: remove this, handle conditions withou rating differently
         return features
 
     @staticmethod

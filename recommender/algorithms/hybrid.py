@@ -20,7 +20,7 @@ class HybridRecommender(BaseRecommender):
 
     def fit(self, dataset: Dataset):
         # Compute utility matrix (common for all recommenders)
-        utility_matrix = self._get_utility_matrix(dataset.p_trials, dataset.therapies)
+        utility_matrix = self._get_utility_matrix(dataset.p_trials, dataset.p_conditions, dataset.therapies)
         # Compute global baseline estimates
         global_baseline = self._get_baseline_estimates(utility_matrix)
         # Fit recommenders on dataset
@@ -31,10 +31,10 @@ class HybridRecommender(BaseRecommender):
             recommender.fit(dataset)
 
 
-    def predict(self, patient_id: str, condition_id: str):
+    def predict(self, patient_id: str, condition_id: str, verbose=True):
         # TODO: rank aggregation (check: https://people.orie.cornell.edu/dpw/talks/RankAggDec2012.pdf)
         results = []
-        pbar = tqdm(self.recommenders)
+        pbar = tqdm(self.recommenders, disable=not verbose)
         for recommender in pbar:
             pbar.set_description(recommender.method)
             result = recommender.predict(patient_id, condition_id)

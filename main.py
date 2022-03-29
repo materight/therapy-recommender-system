@@ -27,7 +27,6 @@ if __name__ == '__main__':
     #parser.add_argument('dataset_path', type=str, help='path to the dataset file.', default='./data/generated/dataset.json')
     #parser.add_argument('patient_id', type=str, help='id of the patient for which to compute the recommendation.')
     #parser.add_argument('condition_id', type=str, help='id of the condition of the patient for which to compute the recommendation.')
-    
     #TODO: remove
     dataset_path = './data/generated'
     tests = pd.read_csv(f'{dataset_path}/test.csv', sep='\t')
@@ -36,12 +35,11 @@ if __name__ == '__main__':
     parser.set_defaults(patient_id=str(patient_id))
     parser.set_defaults(condition_id=str(condition_id))
     #TODO: remove
-
     args = parser.parse_args()
 
     # Load dataset
     print('Loading dataset...')
-    dataset = Dataset(args.dataset_path)
+    dataset = Dataset(args.dataset_path, val_ratio=0)
 
     print('Init recommender...')
     recommender = HybridRecommender([
@@ -56,7 +54,7 @@ if __name__ == '__main__':
     print('Fit recommender on dataset...')
     recommender.fit(dataset)
     
-    print('Run prediction...')
+    print('Compute prediction...')
     results = recommender.predict(args.patient_id, args.condition_id)
 
     print('Done')
