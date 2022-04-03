@@ -40,8 +40,8 @@ class BaseRecommender:
         """Compute the baseline estimates on the given utility matrix."""
         global_avg_rating = np.nanmean(utility_matrix)
         utility_matrix = utility_matrix.reindex(index=p_conditions.index.get_level_values('id')) # Re-index to include global baseline for conditions without therapies
-        users_rating_deviation = utility_matrix.mean(axis=1, skipna=True).values - global_avg_rating
-        items_rating_deviation = utility_matrix.mean(axis=0, skipna=True).values - global_avg_rating
+        users_rating_deviation = (utility_matrix.mean(axis=1, skipna=True) - global_avg_rating).fillna(0).values # fillna for users with no ratings
+        items_rating_deviation = (utility_matrix.mean(axis=0, skipna=True) - global_avg_rating).fillna(0).values
         global_baseline = global_avg_rating + (users_rating_deviation.reshape(-1,1) + items_rating_deviation.reshape(1,-1))
         global_baseline = pd.DataFrame(global_baseline, index=utility_matrix.index, columns=utility_matrix.columns)
         return global_baseline

@@ -37,7 +37,7 @@ class Dataset():
         
         # Generate validation split, using last trials from a subset of conditions and patients
         if val_ratio > 0:
-            # TODO: make split computation reproducible
+            np.random.seed(0)
             val_patients_idx = patients.sample(frac=val_ratio).index
             val_patients_idx = val_patients_idx.intersection(p_conditions.index.get_level_values('patient'))
             val_conditions_idx = p_conditions.loc[val_patients_idx].sample(frac=val_ratio).index

@@ -95,6 +95,8 @@ class LatentFactorRecommender(BaseRecommender):
 
 
     def predict(self, patient_id: str, condition_id: str):
-        # https://towardsdatascience.com/introduction-to-latent-matrix-factorization-recommender-systems-8dfc63b94875
-        pred_ratings = self.predictions.loc[condition_id]
+        if condition_id in self.predictions.index:
+            pred_ratings = self.predictions.loc[condition_id]
+        else: # No rating availble for the given condition, return NaN predictions
+            pred_ratings = pd.Series(np.nan, index=self.predictions.columns)
         return pred_ratings

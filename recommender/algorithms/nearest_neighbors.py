@@ -11,7 +11,7 @@ class NearestNeighborsRecommender(BaseRecommender):
 
         Args:
             method (str): Type of features to be used to compute distances between objects. 
-                          Supported values: 'demographic', 'trials-sequence'.
+                          Supported values: 'demographic', 'conditions-profile', 'trials-sequence'.
             similarity (str): Which similarity metric to use.
                               Supported values: 'jaccard', 'pearson', 'levenshtein'.
             n_neightbors (int): Number of similar objects to consider when computing the rating average.
@@ -56,6 +56,8 @@ class NearestNeighborsRecommender(BaseRecommender):
         elif self.method == 'trials-sequence':
             # Compute Jaccard similarity between the given condition and all the others to reduce the number of conditons to consider when computing the Levenshtein distance
             utility_mask = self.utility_matrix.index == condition_id
+            if not utility_mask.any(): # No rating available for the current target: return None since no neighbors can be found
+                return None, None
             jaccard_similarities = self._jaccard_similarity(self.utility_matrix[utility_mask], self.utility_matrix[~utility_mask])
             # Compute sorted sequence of trials from the most similar conditions
             relevant_conditions = jaccard_similarities.nlargest(self.n_neighbors * 10).index
@@ -68,6 +70,8 @@ class NearestNeighborsRecommender(BaseRecommender):
 
     def _get_neighbors(self, target_features: pd.DataFrame, other_features: pd.DataFrame):
         """Compute the k most similar objects to the target."""
+        if target_features is None or target_features.shape[0] == 0: # No rating available for the current target: return None since no neighbors can be found
+            return None
         if self.similarity == 'jaccard':
             similarities = self._jaccard_similarity(target_features, other_features)
         elif self.similarity == 'hamming':
@@ -86,6 +90,8 @@ class NearestNeighborsRecommender(BaseRecommender):
 
     def _predict_ratings(self, object_id: str, neighbors_similarities: pd.DataFrame):
         """Predict the therapy ratings using the given k most similar conditions."""
+        if neighbors_similarities is None: # If no neighbor was found, return NaN (invalid) predictions
+            return pd.Series(np.nan, index=self.utility_matrix.columns)
         neighbors_ratings = self.utility_matrix.loc[neighbors_similarities.index] # Get the ratings of the top k similar conditions
         # Generate matrix of weigths to be applied. Weights are the similairty scores
         weights = np.tile(neighbors_similarities.values.reshape(-1, 1), len(neighbors_ratings.columns))

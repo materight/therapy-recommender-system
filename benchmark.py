@@ -7,6 +7,7 @@ from recommender.algorithms import (HybridRecommender, NearestNeighborsRecommend
 from recommender.dataset import Dataset
 
 if __name__ == '__main__':
+    # TODO: add NDCG metric for evaluation
     # Script arguments
     parser = argparse.ArgumentParser(description='Run a benchmark evaluation for the therapy recommender system.', formatter_class=lambda prog: argparse.HelpFormatter(prog, max_help_position=42))
     #parser.add_argument('dataset_path', type=str, help='path to the dataset file.', default='./data/generated/dataset.json')
@@ -22,14 +23,14 @@ if __name__ == '__main__':
     dataset = Dataset(args.dataset_path, val_ratio=args.val_split)
 
     print('Init recommender...')
-    recommender = HybridRecommender([
-        NearestNeighborsRecommender(method='demographic', similarity='hamming', n_neighbors=50), # For patients without registered conditions
-        NearestNeighborsRecommender(method='conditions-profile', similarity='jaccard', n_neighbors=50), # For patients without registered conditions
-        #NearestNeighborsRecommender(method='trials-sequence', similarity='levenshtein', n_neighbors=50),
-        #CollaborativeFilteringRecommender(method='user-user', similarity='pearson', n_neighbors=50),
-        #CollaborativeFilteringRecommender(method='item-item', similarity='pearson', n_neighbors=50),
-        #LatentFactorRecommender(method='svd', latent_size=100, epochs=20, lr=0.005, reg=0.02),
-        #LatentFactorRecommender(method='svd++', latent_size=20, epochs=20, lr=0.005, reg=0.02),
+    recommender = HybridRecommender(method='avg', recommenders=[
+            NearestNeighborsRecommender(method='demographic', similarity='hamming', n_neighbors=50), # For patients without registered conditions
+            NearestNeighborsRecommender(method='conditions-profile', similarity='jaccard', n_neighbors=50),
+            NearestNeighborsRecommender(method='trials-sequence', similarity='levenshtein', n_neighbors=50),
+            CollaborativeFilteringRecommender(method='user-user', similarity='pearson', n_neighbors=50),
+            #CollaborativeFilteringRecommender(method='item-item', similarity='pearson', n_neighbors=50),
+            LatentFactorRecommender(method='svd', latent_size=100, epochs=20, lr=0.005, reg=0.02),
+            LatentFactorRecommender(method='svd++', latent_size=20, epochs=20, lr=0.005, reg=0.02),
     ])
 
     print('Fit recommender on dataset...')

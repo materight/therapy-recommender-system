@@ -10,16 +10,7 @@ if __name__ == '__main__':
     - Content-based: define a profile for therapies, compute a profile for each condition as average of the therapies applied for it (weigthed by their success), and finally
                      compute a patient profile as average of the profiles of the conditions he has. Then, suggest a therapy based on the distance between the patient profile or the
                      condition profile.
-    - Dimensionality reduction: Try SVD but also Non-negative Matrix Factorization
-    - Collaborative filtering: try also item-based
-    - Handle case when the patient has no trials available for a given condition
     - Hybrid: check https://www.quora.com/How-can-I-combine-the-recommendation-results-from-User-based-collaborative-and-item-based-and-return-the-best-of-these-two-using-Apache-Mahout
-
-    Eval:
-    - Do a ablation study removing different recommenders
-    - RMSE
-    - MAE
-    - NDCG (check: https://benjlindsay.com/posts/comparing-collaborative-filtering-methods#algorithm-comparisons)
     """
 
     # Script arguments
@@ -42,7 +33,7 @@ if __name__ == '__main__':
     dataset = Dataset(args.dataset_path, val_ratio=0)
 
     print('Init recommender...')
-    recommender = HybridRecommender([
+    recommender = HybridRecommender(method='avg', recommenders=[
         #NearestNeighborsRecommender(method='demographic', similarity='hamming', n_neighbors=50), # For patients without registered conditions
         NearestNeighborsRecommender(method='conditions-profile', similarity='jaccard', n_neighbors=50),
         #NearestNeighborsRecommender(method='trials-sequence', similarity='levenshtein', n_neighbors=50),
