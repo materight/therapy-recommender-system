@@ -23,7 +23,7 @@ if __name__ == '__main__':
     dataset = Dataset(args.dataset_path, val_ratio=args.val_split)
 
     print('Init recommender...')
-    recommender = HybridRecommender(method='avg', recommenders=[
+    recommender = HybridRecommender(method='cascade', recommenders=[
             NearestNeighborsRecommender(method='demographic', similarity='hamming', n_neighbors=50), # For patients without registered conditions
             NearestNeighborsRecommender(method='conditions-profile', similarity='jaccard', n_neighbors=50),
             NearestNeighborsRecommender(method='trials-sequence', similarity='levenshtein', n_neighbors=50),

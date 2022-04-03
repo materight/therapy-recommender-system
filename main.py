@@ -33,14 +33,14 @@ if __name__ == '__main__':
     dataset = Dataset(args.dataset_path, val_ratio=0)
 
     print('Init recommender...')
-    recommender = HybridRecommender(method='avg', recommenders=[
+    recommender = HybridRecommender(method='cascade', recommenders=[
         #NearestNeighborsRecommender(method='demographic', similarity='hamming', n_neighbors=50), # For patients without registered conditions
         NearestNeighborsRecommender(method='conditions-profile', similarity='jaccard', n_neighbors=50),
         #NearestNeighborsRecommender(method='trials-sequence', similarity='levenshtein', n_neighbors=50),
         #CollaborativeFilteringRecommender(method='user-user', similarity='pearson', n_neighbors=50),
         #CollaborativeFilteringRecommender(method='item-item', similarity='pearson', n_neighbors=50),
-        #LatentFactorRecommender(method='svd', latent_size=100, epochs=20, lr=0.005, reg=0.02),
-        #LatentFactorRecommender(method='svd++', latent_size=20, epochs=20, lr=0.005, reg=0.02),
+        LatentFactorRecommender(method='svd', latent_size=100, epochs=20, lr=0.005, reg=0.02),
+        LatentFactorRecommender(method='svd++', latent_size=20, epochs=20, lr=0.005, reg=0.02),
     ])
 
     print('Fit recommender on dataset...')
@@ -50,4 +50,3 @@ if __name__ == '__main__':
     results = recommender.predict(args.patient_id, args.condition_id)
 
     print('Done')
-
