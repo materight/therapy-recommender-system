@@ -11,7 +11,7 @@ class NearestNeighborsRecommender(BaseRecommender):
 
         Args:
             method (str): Type of features to be used to compute distances between objects. 
-                          Supported values: 'patient-profile', 'trials-sequence'.
+                          Supported values: 'demographic', 'trials-sequence'.
             similarity (str): Which similarity metric to use.
                               Supported values: 'jaccard', 'pearson', 'levenshtein'.
             n_neightbors (int): Number of similar objects to consider when computing the rating average.
@@ -33,8 +33,10 @@ class NearestNeighborsRecommender(BaseRecommender):
     def fit(self, dataset: Dataset):
         self.dataset = dataset
         # Compute features to be used to find similar objects
-        if self.method == 'patient-profile': # Demographic approach
-            self.features = self._build_patients_profiles(self.dataset.patients)
+        if self.method == 'demographic': # Demographic approach
+            self.features = self._build_patients_demographic_profiles(self.dataset.patients)
+        elif self.method == 'conditions-profile':
+            self.features = self._build_patients_conditions_profiles(self.dataset.p_conditions, self.dataset.conditions)
         elif self.method == 'trials-sequence':
             self.features = self._get_trials_sequences(self.dataset.p_trials)
         else: 
@@ -43,14 +45,14 @@ class NearestNeighborsRecommender(BaseRecommender):
 
     def _get_features(self, patient_id: str, condition_id: str):
         """Get the features according to the given features type."""
-        if self.method == 'patient-profile':
+        if self.method in ['demographic', 'conditions-profile']:
             # Remap patients profiles to conditions indexes, using only conditions of the same type as the target condition
             target_condition_kind = self.dataset.p_conditions[self.dataset.p_conditions.index.get_level_values('id') == condition_id].kind.iloc[0]
             relevant_conditions = self.dataset.p_conditions[self.dataset.p_conditions.kind == target_condition_kind].reset_index()
-            final_features = relevant_conditions[['id', 'patient']].merge(self.features, left_on='patient', right_on='id', how='left').set_index('id')
+            final_features = relevant_conditions[['id', 'patient']].merge(self.features, left_on='patient', right_on='id', how='left').set_index('id').drop('patient', axis=1)
             # Re-map patients features to conditions indexes
-            target_features = final_features.loc[final_features.index == condition_id]
-            others_features = final_features.loc[final_features.index != condition_id]
+            target_features = final_features[final_features.index == condition_id]
+            others_features = final_features[final_features.index != condition_id]
         elif self.method == 'trials-sequence':
             # Compute Jaccard similarity between the given condition and all the others to reduce the number of conditons to consider when computing the Levenshtein distance
             utility_mask = self.utility_matrix.index == condition_id

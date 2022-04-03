@@ -23,12 +23,13 @@ if __name__ == '__main__':
 
     print('Init recommender...')
     recommender = HybridRecommender([
-        #NearestNeighborsRecommender(method='patient-profile', similarity='hamming', n_neighbors=50), # For patients without registered conditions
+        NearestNeighborsRecommender(method='demographic', similarity='hamming', n_neighbors=50), # For patients without registered conditions
+        NearestNeighborsRecommender(method='conditions-profile', similarity='jaccard', n_neighbors=50), # For patients without registered conditions
         #NearestNeighborsRecommender(method='trials-sequence', similarity='levenshtein', n_neighbors=50),
         #CollaborativeFilteringRecommender(method='user-user', similarity='pearson', n_neighbors=50),
         #CollaborativeFilteringRecommender(method='item-item', similarity='pearson', n_neighbors=50),
-        LatentFactorRecommender(method='svd', latent_size=100, epochs=20, lr=0.005, reg=0.02),
-        LatentFactorRecommender(method='svd++', latent_size=20, epochs=20, lr=0.005, reg=0.02),
+        #LatentFactorRecommender(method='svd', latent_size=100, epochs=20, lr=0.005, reg=0.02),
+        #LatentFactorRecommender(method='svd++', latent_size=20, epochs=20, lr=0.005, reg=0.02),
     ])
 
     print('Fit recommender on dataset...')

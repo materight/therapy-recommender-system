@@ -20,9 +20,9 @@ class HybridRecommender(BaseRecommender):
 
     def fit(self, dataset: Dataset):
         # Compute utility matrix (common for all recommenders)
-        utility_matrix = self._get_utility_matrix(dataset.p_trials, dataset.p_conditions, dataset.therapies)
+        utility_matrix = self._get_utility_matrix(dataset.p_trials, dataset.therapies)
         # Compute global baseline estimates
-        global_baseline = self._get_baseline_estimates(utility_matrix)
+        global_baseline = self._get_baseline_estimates(utility_matrix, dataset.p_conditions)
         # Fit recommenders on dataset
         pbar = tqdm(self.recommenders)
         for recommender in pbar:

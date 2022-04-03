@@ -27,19 +27,19 @@ class BaseRecommender:
         return p_trials[p_trials.condition.isin(condition_ids)]
 
     @staticmethod
-    def _get_utility_matrix(p_trials: pd.DataFrame, p_conditions: pd.DataFrame, therapies: pd.DataFrame):
+    def _get_utility_matrix(p_trials: pd.DataFrame, therapies: pd.DataFrame):
         """Compute the utility matrix, using as value the 'successful' column. The result is a NxM utility matrix, where:
             - N is the number of conditions of each patient (i.e. the "users")
             - M is the number of available therapies (i.e. the "items")"""
         features = p_trials.pivot_table(index='condition', columns='therapy', values='successful', aggfunc='mean')
         features = features.reindex(columns=therapies.index)
-        features = features.reindex(index=p_conditions.index.get_level_values('id')) # TODO: remove this, handle conditions withou rating differently
         return features
 
     @staticmethod
-    def _get_baseline_estimates(utility_matrix: pd.DataFrame):
+    def _get_baseline_estimates(utility_matrix: pd.DataFrame, p_conditions: pd.DataFrame):
         """Compute the baseline estimates on the given utility matrix."""
         global_avg_rating = np.nanmean(utility_matrix)
+        utility_matrix = utility_matrix.reindex(index=p_conditions.index.get_level_values('id')) # Re-index to include global baseline for conditions without therapies
         users_rating_deviation = utility_matrix.mean(axis=1, skipna=True).values - global_avg_rating
         items_rating_deviation = utility_matrix.mean(axis=0, skipna=True).values - global_avg_rating
         global_baseline = global_avg_rating + (users_rating_deviation.reshape(-1,1) + items_rating_deviation.reshape(1,-1))
@@ -53,11 +53,20 @@ class BaseRecommender:
         return sequences
 
     @staticmethod
-    def _build_patients_profiles(patients: pd.DataFrame):
+    def _build_patients_demographic_profiles(patients: pd.DataFrame):
+        """Build the patients profiles based on the available demographic data."""
         patients = patients.copy().drop(columns=['name', 'email', 'birthdate'], errors='ignore')
         if 'age' in patients.columns: # Convert age to category
             patients['age'] = pd.cut(patients['age'], bins=[0, 2, 18, 30, 50, 70, np.inf], labels=['<2', '2-18', '18-30', '30-50', '50-70', '>70'])
         return patients
+
+    @staticmethod
+    def _build_patients_conditions_profiles(p_conditions: pd.DataFrame, conditions: pd.DataFrame):
+        """Build the patients profiles based on their medical conditions."""
+        profiles = pd.crosstab(p_conditions.index.get_level_values('patient'), p_conditions['kind']).astype(bool)
+        profiles = profiles.reindex(columns=conditions.index)
+        profiles.index.rename('id', inplace=True)
+        return profiles
 
     @staticmethod
     def _jaccard_similarity(target_item: pd.DataFrame, other_items: pd.DataFrame):
