@@ -1,6 +1,5 @@
 import numpy as np
 import pandas as pd
-from sklearn import neighbors
 
 from recommender.dataset import Dataset
 from recommender.algorithms.utils import BaseRecommender
@@ -105,7 +104,7 @@ class NearestNeighborsRecommender(BaseRecommender):
         return pred_ratings
 
 
-    def predict(self, patient_id: str, condition_id: str):
+    def predict(self, patient_id: str, condition_id: str, therapy_id: str = None):
         target_features, other_features = self._get_features(patient_id, condition_id) # Compute features
         neighbors_similarities = self._get_neighbors(target_features, other_features) # Get neighbors with similarity values
         pred_ratings = self._predict_ratings(condition_id, neighbors_similarities) # Compute ratings predictions

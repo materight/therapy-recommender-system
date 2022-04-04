@@ -18,7 +18,7 @@ class BaseRecommender:
         """Fit the recommender algorithm to the given data."""
 
     @abstractmethod
-    def predict(self, patient_id: str, condition_id: str):
+    def predict(self, patient_id: str, condition_id: str, therapy_id: str = None):
         """Recommend a list of k therapies with a predicted success rate."""
 
     @staticmethod

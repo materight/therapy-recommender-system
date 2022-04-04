@@ -22,6 +22,7 @@ class HybridRecommender(BaseRecommender):
         super().__init__()
         self.method = method
         self.recommenders = recommenders
+        self.active_recommenders = None
 
 
     def fit(self, dataset: Dataset):
@@ -35,6 +36,10 @@ class HybridRecommender(BaseRecommender):
             pbar.set_description(recommender.method)
             recommender.init_state(utility_matrix=utility_matrix, global_baseline=global_baseline)
             recommender.fit(dataset)
+
+    def set_active_recommenders(self, active_recommenders: List[str]):
+        """Set which recommenders should be used for prediction. Set to None to enable all."""
+        self.active_recommenders = active_recommenders
 
     def _combine(self, predictions: pd.DataFrame):
         """Combine multiple predictions into single result."""
@@ -50,14 +55,15 @@ class HybridRecommender(BaseRecommender):
             raise ValueError(f'Method {self.method} is not supported.')
         return final_predictions
 
-    def predict(self, patient_id: str, condition_id: str, verbose=True):
+    def predict(self, patient_id: str, condition_id: str, therapy_id: str = None, verbose=True):
         # TODO: rank aggregation (check: https://people.orie.cornell.edu/dpw/talks/RankAggDec2012.pdf)
         results = []
         pbar = tqdm(self.recommenders, disable=not verbose)
         for recommender in pbar:
-            pbar.set_description(recommender.method)
-            result = recommender.predict(patient_id, condition_id)
-            results.append(result.rename(recommender.method))
+            if self.active_recommenders is None or recommender.method in self.active_recommenders:
+                pbar.set_description(recommender.method)
+                result = recommender.predict(patient_id, condition_id, therapy_id)
+                results.append(result.rename(recommender.method))
         # Combine predictions into single result
         predictions = pd.concat(results, axis=1)
         predictions = self._combine(predictions)

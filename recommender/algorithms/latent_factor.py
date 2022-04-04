@@ -94,7 +94,7 @@ class LatentFactorRecommender(BaseRecommender):
         self.predictions = pd.DataFrame(predictions, index=self.utility_matrix.index, columns=self.utility_matrix.columns)
 
 
-    def predict(self, patient_id: str, condition_id: str):
+    def predict(self, patient_id: str, condition_id: str, therapy_id: str = None):
         if condition_id in self.predictions.index:
             pred_ratings = self.predictions.loc[condition_id]
         else: # No rating availble for the given condition, return NaN predictions

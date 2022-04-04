@@ -45,10 +45,11 @@ class CollaborativeFilteringRecommender(NearestNeighborsRecommender):
         return pred_ratings
 
 
-    def _predict_item_item(self, condition_id: str):
+    def _predict_item_item(self, condition_id: str, therapy_id: str):
         # Predict ratings item by item and aggregate results for the given condition
         pred_ratings = pd.Series(index=self.utility_matrix.index)
-        for therapy_id in tqdm(self.utility_matrix.index, position=1):
+        therapies = tqdm(self.utility_matrix.index, position=1) if therapy_id is None else [therapy_id]
+        for therapy_id in therapies:
             target_features, other_features = self._get_features(therapy_id) # Compute features
             neighbors_similarities = self._get_neighbors(target_features, other_features) # Get neighbors with similarity values
             therapy_pred_ratings = self._predict_ratings(therapy_id, neighbors_similarities) # Compute ratings predictions for the current therapy
@@ -56,10 +57,10 @@ class CollaborativeFilteringRecommender(NearestNeighborsRecommender):
         return pred_ratings
 
 
-    def predict(self, patient_id: str, condition_id: str):
+    def predict(self, patient_id: str, condition_id: str, therapy_id: str = None):
         if self.method == 'user-user':
             return self._predict_user_user(condition_id)
         elif self.method == 'item-item':
-            return self._predict_item_item(condition_id)
+            return self._predict_item_item(condition_id, therapy_id)
         else:
             raise ValueError(f'Method {self.method} is not supported.')
