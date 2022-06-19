@@ -56,7 +56,6 @@ class HybridRecommender(BaseRecommender):
         return final_predictions
 
     def predict(self, patient_id: str, condition_id: str, therapy_id: str = None, verbose=True):
-        # TODO: rank aggregation (check: https://people.orie.cornell.edu/dpw/talks/RankAggDec2012.pdf)
         results = []
         pbar = tqdm(self.recommenders, disable=not verbose)
         for recommender in pbar:

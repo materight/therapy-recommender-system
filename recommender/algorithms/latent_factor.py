@@ -10,7 +10,6 @@ from recommender.algorithms.utils import BaseRecommender
 @njit
 def _svd(ratings, indptr, indices, n_users, n_items, latent_size, epochs, lr, reg, with_implicit_ratings):
     """Funk SVD algoritm using SGD optimization. Source: https://github.com/NicolasHug/Surprise/blob/46b9914995e6c8c7d227b46f2eaeef2d4600580f/surprise/prediction_algorithms/matrix_factorization.pyx#L159"""
-    # TODO: fix NaN results with svd++
     # Initialize matrices
     np.random.seed(0)
     global_mean = ratings.mean()
