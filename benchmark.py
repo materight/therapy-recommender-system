@@ -35,12 +35,8 @@ if __name__ == '__main__':
 
     # Script arguments
     parser = argparse.ArgumentParser(description='Run a benchmark evaluation for the therapy recommender system.', formatter_class=lambda prog: argparse.HelpFormatter(prog, max_help_position=42))
-    #parser.add_argument('dataset_path', type=str, help='path to the dataset file.', default='./data/generated/dataset.json')
+    parser.add_argument('dataset_path', type=str, help='path to the dataset file.', default='./data/final/dataset.json')
     parser.add_argument('--val_split', type=float, help='fraction of trials samples to be used for validation.', default=0.1)
-    #TODO: remove
-    dataset_path = './data/final'
-    parser.set_defaults(dataset_path=f'{dataset_path}/dataset.json')
-    #TODO: remove
     args = parser.parse_args()
 
     # Load dataset

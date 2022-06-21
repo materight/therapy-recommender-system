@@ -26,6 +26,7 @@ class Dataset():
                          .astype({'patient': 'category', 'kind': 'category'}) \
                          .set_index(['patient', 'id'])
         p_trials = pd.DataFrame.from_dict(p_trials) \
+                     .rename(columns={'successfull': 'successful'}) \
                      .astype({'patient': 'category', 'condition': 'category', 'therapy': 'category', 'successful': int}) \
                      .set_index(['patient', 'id'])
         
@@ -59,3 +60,15 @@ class Dataset():
         self.p_conditions = p_conditions
         self.p_trials = p_trials
         self.val_trials = val_trials
+
+
+    def parse_results(self, predictions: pd.Series, num: int):
+        """Parse the results given by a recommender system into the final output format."""
+        # Add additional info
+        predictions = pd.concat([self.therapies.name, predictions.rename('score')], join='inner', axis=1)
+        predictions.index.name = 'therapy_id'
+        predictions = predictions.reset_index()
+        # Filter only the predicitons with the highest scores
+        predictions = predictions.sort_values(by='score', ascending=False)
+        predictions = predictions.iloc[:num]
+        return predictions
