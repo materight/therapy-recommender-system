@@ -16,7 +16,7 @@ class Plotter():
     @contextmanager
     def plot(self, filepath: str, **kwargs):
         matplotlib.rc('font', size=16)
-        fig, ax = plt.subplots(figsize=(6.4, 5), **kwargs)
+        fig, ax = plt.subplots(figsize=(6.4, 4), **kwargs)
         yield fig, ax
         filepath = os.path.join(self.out_dir, f'{filepath}.pdf')
         os.makedirs(os.path.dirname(filepath), exist_ok=True)
