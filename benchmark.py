@@ -8,10 +8,6 @@ from typing import List
 from recommender.algorithms import (HybridRecommender, NearestNeighborsRecommender, CollaborativeFilteringRecommender, LatentFactorRecommender)
 from recommender.dataset import Dataset
 
-"""TODO: 
-    - add NDCG metric for evaluation
-    - implement cross validation with multiple folds
-"""
 
 def evaluate(dataset: Dataset, recommender: HybridRecommender, active_recommenders: List[str]):
     print(", ".join(active_recommenders))
@@ -35,7 +31,7 @@ if __name__ == '__main__':
 
     # Script arguments
     parser = argparse.ArgumentParser(description='Run a benchmark evaluation for the therapy recommender system.', formatter_class=lambda prog: argparse.HelpFormatter(prog, max_help_position=42))
-    parser.add_argument('dataset_path', type=str, help='path to the dataset file.', default='./data/final/dataset.json')
+    parser.add_argument('--dataset_path', '-d', type=str, help='path to the dataset file.', default='./data/final/dataset.json')
     parser.add_argument('--val_split', type=float, help='fraction of trials samples to be used for validation.', default=0.1)
     args = parser.parse_args()
 
