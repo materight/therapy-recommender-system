@@ -1,4 +1,10 @@
 # Therapy Recommender System
+An hybrid recommender system to predict the effectiveness of therapies in curing a medical condition of a patient. 
+
+The system is based on a combination of different methods:
+- **Latent Factorization Models** (SVD/SVD++).
+- **Collaborative Filtering** (user-user/item-item).
+- **Nearest Neighbors**.
 
 ## Get started
 Clone the repository and install the required dependencies:
