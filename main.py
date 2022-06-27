@@ -30,7 +30,7 @@ if __name__ == '__main__':
 
     # Init hybrid recommender
     print('Init recommender...')
-    recommender = HybridRecommender(method='cascade', recommenders=[
+    recommender = HybridRecommender(method='avg', recommenders=[
         NearestNeighborsRecommender(method='demographic', similarity='hamming', n_neighbors=50), # For patients without registered conditions
         NearestNeighborsRecommender(method='conditions-profile', similarity='jaccard', n_neighbors=50),
         NearestNeighborsRecommender(method='trials-sequence', similarity='levenshtein', n_neighbors=50),
