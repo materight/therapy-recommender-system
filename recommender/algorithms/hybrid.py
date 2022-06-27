@@ -9,7 +9,7 @@ from recommender.algorithms.utils import BaseRecommender
 class HybridRecommender(BaseRecommender):
 
     # Order of available recommender for the `cascade` hybrid method
-    METHODS_ORDER = [('svd++', 'svd'), ('item-item', ), ('user-user', 'trials-sequence'), ('conditions-profile', 'demographic')]
+    METHODS_ORDER = [('svd++', 'svd'), ('item-item', ), ('user-user', 'trials-sequence'), ('conditions-profile', ), ('demographic', )]
 
     def __init__(self, method: str, recommenders: List[BaseRecommender]):
         """
