@@ -3,6 +3,7 @@ import pandas as pd
 
 from recommender.dataset import Dataset
 from recommender.algorithms.utils import BaseRecommender
+
 class NearestNeighborsRecommender(BaseRecommender):
     def __init__(self, method: str, similarity: str, n_neighbors: int):
         """
