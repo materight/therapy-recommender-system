@@ -3,15 +3,12 @@ import argparse
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
-from typing import List
 
-from recommender.algorithms import (HybridRecommender, NearestNeighborsRecommender, CollaborativeFilteringRecommender, LatentFactorRecommender)
+from recommender.algorithms import (BaselineRecommender, HybridRecommender, NearestNeighborsRecommender, CollaborativeFilteringRecommender, LatentFactorRecommender)
 from recommender.dataset import Dataset
 
 
-def evaluate(dataset: Dataset, recommender: HybridRecommender, active_recommenders: List[str]):
-    print(", ".join(active_recommenders))
-    recommender.set_active_recommenders(active_recommenders)
+def evaluate(dataset: Dataset, recommender: HybridRecommender):
     n_samples = len(dataset.val_trials)
     rmse, mae = 0, 0
     for trial in tqdm(dataset.val_trials.reset_index().itertuples(), total=n_samples):
@@ -31,8 +28,9 @@ if __name__ == '__main__':
 
     # Script arguments
     parser = argparse.ArgumentParser(description='Run a benchmark evaluation for the therapy recommender system.', formatter_class=lambda prog: argparse.HelpFormatter(prog, max_help_position=42))
-    parser.add_argument('--dataset_path', '-d', type=str, help='path to the dataset file.', default='./data/final/dataset.json')
+    parser.add_argument('--dataset_path', '-d', type=str, required=True, help='path to the dataset file.')
     parser.add_argument('--val_split', type=float, help='fraction of trials samples to be used for validation.', default=0.2)
+    parser.add_argument('--baselines', action='store_true', help='if specified, also evaluate the baseline methods.')
     args = parser.parse_args()
 
     # Load dataset
@@ -55,16 +53,25 @@ if __name__ == '__main__':
     
     print('\nSingle algorithms evaluation...')
     results = []
+    if args.baselines:
+        for baseline_method in ['random', 'mean']:
+            baseline_recommender = BaselineRecommender(baseline_method)
+            baseline_recommender.fit(dataset)
+            rmse, mae = evaluate(dataset, baseline_recommender)
+            results.append(('single', baseline_method, rmse, mae))
     algorithms = [ rec.method for rec in recommender.recommenders ]
     for i, algo in enumerate(algorithms, start=1):
-        print(f'\n[{i}/{len(algorithms)}] ', end='')
-        rmse, mae = evaluate(dataset, recommender, [ algo ])
+        print(f'\n[{i}/{len(algorithms)}] {algo}')
+        recommender.set_active_recommenders([ algo ])
+        rmse, mae = evaluate(dataset, recommender)
         results.append(('single', algo, rmse, mae))
 
     print('\nAblation evaluation...')
     for i, algo in enumerate(algorithms, start=1):
-        print(f'\n[{i}/{len(algorithms)}] ', end='')
-        rmse, mae = evaluate(dataset, recommender, [ a for a in algorithms if a != algo ])
+        active_algos = [ a for a in algorithms if a != algo ]
+        print(f'\n[{i}/{len(algorithms)}] {",".join(active_algos)}')
+        recommender.set_active_recommenders(active_algos)
+        rmse, mae = evaluate(dataset, recommender)
         results.append(('ablation', algo, rmse, mae))
 
     print('\nSaving results...')
