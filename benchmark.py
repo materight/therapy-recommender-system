@@ -55,6 +55,7 @@ if __name__ == '__main__':
     results = []
     if args.baselines:
         for baseline_method in ['random', 'mean']:
+            print(f'\nbaseline {baseline_method}')
             baseline_recommender = BaselineRecommender(baseline_method)
             baseline_recommender.fit(dataset)
             rmse, mae = evaluate(dataset, baseline_recommender)
